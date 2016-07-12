@@ -1,17 +1,6 @@
 package com.tokbox.android.annotations;
 
 
-import com.opentok.android.Connection;
-import com.opentok.android.Publisher;
-import com.opentok.android.Session;
-import com.opentok.android.Subscriber;
-import com.tokbox.android.accpack.AccPackSession;
-import com.tokbox.android.annotations.utils.AnnotationsVideoRenderer;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import java.util.ArrayList;
 
 public class AnnotationsManager {

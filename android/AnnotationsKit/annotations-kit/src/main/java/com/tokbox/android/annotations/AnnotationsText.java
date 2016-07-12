@@ -1,7 +1,5 @@
 package com.tokbox.android.annotations;
 
-import android.graphics.Paint;
-import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 
@@ -36,7 +34,7 @@ public class AnnotationsText implements View.OnClickListener{
 
     @Override
     public void onClick(View v) {
-        
+
     }
 
     public EditText getEditText() {
