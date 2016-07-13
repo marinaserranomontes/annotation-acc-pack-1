@@ -404,8 +404,6 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
                             else {
                                 sendAnnotation(mode.toString(), buildSignalFromText(x, y, s.toString(), false, false));
                             }
-
-
                         }
 
                         @Override
@@ -825,6 +823,12 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
         if (!cid.equals(mycid)) { // Ensure that we only handle signals from other users on the current canvas
             if (type.contains(SIGNAL_TYPE)) {
 
+                this.setVisibility(VISIBLE);
+                if (!loaded){
+                    resize();
+                    loaded = true;
+                }
+                
                 if (type.equalsIgnoreCase(Mode.Pen.toString())) {
                     mode = Mode.Pen;
                     // Build object from JSON array
