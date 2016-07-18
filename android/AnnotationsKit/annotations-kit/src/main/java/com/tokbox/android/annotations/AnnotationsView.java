@@ -828,7 +828,7 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
                     resize();
                     loaded = true;
                 }
-                
+
                 if (type.equalsIgnoreCase(Mode.Pen.toString())) {
                     mode = Mode.Pen;
                     // Build object from JSON array
