@@ -7,6 +7,7 @@
 //
 
 #import "AppDelegate.h"
+#import <OTAnnotationKit/OTAnnotationKit.h>
 
 @interface AppDelegate ()
 
@@ -17,6 +18,9 @@
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     // Override point for customization after application launch.
+    [OTAnnotator setOpenTokApiKey:@"ReplaceMe"
+                        sessionId:@"ReplaceMe"
+                            token:@"ReplaceMe"];
     return YES;
 }
 

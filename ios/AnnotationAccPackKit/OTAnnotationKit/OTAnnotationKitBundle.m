@@ -1,8 +1,6 @@
 //
 //  OTAnnotationKitBundle.m
-//  OTAnnotationAccPackKit
 //
-//  Created by Xi Huang on 7/7/16.
 //  Copyright © 2016 Tokbox, Inc. All rights reserved.
 //
 
@@ -11,7 +9,7 @@
 
 @implementation OTAnnotationKitBundle
 
-+ (NSBundle *)textChatKitBundle {
++ (NSBundle *)annotationKitBundle {
     
     NSURL *annotationtKitBundleURL = [[NSBundle mainBundle] URLForResource:@"OTAnnotationKitBundle" withExtension:@"bundle"];
     if (annotationtKitBundleURL){

@@ -1,16 +1,10 @@
 //
 //  AnnotationView.m
-//  ScreenShareSample
 //
-//  Created by Xi Huang on 5/18/16.
-//  Copyright © 2016 Lucas Huang. All rights reserved.
+//  Copyright © 2016 Tokbox. All rights reserved.
 //
 
 #import "OTAnnotationView.h"
-#import "OTAnnotationDataManager.h"
-
-#import "OTAnnotationPoint.h"
-#import "OTAnnotationPoint_Private.h"
 
 #import <OTKAnalytics/OTKLogger.h>
 
@@ -27,7 +21,14 @@
 - (instancetype)initWithFrame:(CGRect)frame {
     
     if (self = [super initWithFrame:frame]) {
-        // init
+        
+        [OTKLogger analyticsWithClientVersion:KLogClientVersion
+                                       source:[[NSBundle mainBundle] bundleIdentifier]
+                                  componentId:kLogComponentIdentifier
+                                         guid:[[NSUUID UUID] UUIDString]];
+        
+        [OTKLogger logEventAction:KLogActionInitialize variation:KLogVariationSuccess completion:nil];
+        
         _annotationDataManager = [[OTAnnotationDataManager alloc] init];
         [self setBackgroundColor:[UIColor clearColor]];
     }
@@ -37,18 +38,18 @@
 - (void)setCurrentAnnotatable:(id<OTAnnotatable>)annotatable {
     
     if ([annotatable isKindOfClass:[OTAnnotationPath class]]) {
+        _currentAnnotatable = annotatable;
         _currentDrawPath = (OTAnnotationPath *)annotatable;
+        [self addAnnotatable:annotatable];
+        [OTKLogger logEventAction:KLogActionFreeHand variation:KLogVariationSuccess completion:nil];
     }
     else if ([annotatable isKindOfClass:[OTAnnotationTextView class]]) {
+        _currentAnnotatable = annotatable;
         _currentEditingTextView = (OTAnnotationTextView *)annotatable;
+        [self addAnnotatable:annotatable];
     }
     else {
-        _currentDrawPath = nil;
-        
-        if (_currentEditingTextView) {
-            [_currentEditingTextView commit];
-        }
-        _currentEditingTextView = nil;
+        [self commitCurrentAnnotatable];
     }
 }
 
@@ -60,7 +61,9 @@
     
     if ([annotatable isMemberOfClass:[OTAnnotationPath class]]) {
         OTAnnotationPath *path = (OTAnnotationPath *)annotatable;
-        [path drawWholePath];
+        if (path.points.count != 0) {
+            [path drawWholePath];
+        }
         [self.annotationDataManager addAnnotatable:path];
         [self setNeedsDisplay];
     }
@@ -76,20 +79,46 @@
     
     id<OTAnnotatable> annotatable = [self.annotationDataManager peakOfAnnotatable];
     if ([annotatable isMemberOfClass:[OTAnnotationPath class]]) {
-        [self.annotationDataManager undo];
+        [self.annotationDataManager pop];
         [self setNeedsDisplay];
+        [OTKLogger logEventAction:KLogActionErase variation:KLogVariationSuccess completion:nil];
     }
     else if ([annotatable isMemberOfClass:[OTAnnotationTextView class]]) {
-        [self.annotationDataManager undo];
+        [self.annotationDataManager pop];
         OTAnnotationTextView *textfield = (OTAnnotationTextView *)annotatable;
         [textfield removeFromSuperview];
+        [OTKLogger logEventAction:KLogActionErase variation:KLogVariationSuccess completion:nil];
     }
 }
 
 - (void)removeAllAnnotatables {
     
-    [self.annotationDataManager undoAll];
+    [self.annotationDataManager pop];
     [self setNeedsDisplay];
+    [OTKLogger logEventAction:KLogActionErase variation:KLogVariationSuccess completion:nil];
+}
+
+- (void)commitCurrentAnnotatable {
+    
+    if ([self.currentAnnotatable respondsToSelector:@selector(commit)]) {
+        [self.currentAnnotatable commit];
+    }
+    _currentAnnotatable = nil;
+    _currentDrawPath = nil;
+    _currentEditingTextView = nil;
+}
+
+- (UIImage *)captureScreen {
+    [OTKLogger logEventAction:KLogActionScreenCapture variation:KLogVariationSuccess completion:nil];
+    CGRect screenRect = [[UIScreen mainScreen] bounds];
+    UIGraphicsBeginImageContext(screenRect.size);
+    CGContextRef ctx = UIGraphicsGetCurrentContext();
+    CGContextFillRect(ctx, screenRect);
+    [self.window.layer renderInContext:ctx];
+    UIImage *newImage = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+    
+    return newImage;
 }
 
 - (void)drawRect:(CGRect)rect {
@@ -106,31 +135,34 @@
 #pragma mark - UIResponder
 - (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event {
     
-    if (_currentDrawPath) {
-        [self.annotationDataManager addAnnotatable:_currentDrawPath];
-        UITouch *touch = [touches anyObject];
-        OTAnnotationPoint *touchPoint = [[OTAnnotationPoint alloc] initWithTouchPoint:touch];
-        [_currentDrawPath drawAtPoint:touchPoint];
-        [OTKLogger logEventAction:KLogActionStartDrawing variation:KLogVariationSuccess completion:nil];
+    if (_currentEditingTextView) return;
+    
+    if (!_currentDrawPath || _currentDrawPath.points.count != 0) {
+        self.currentAnnotatable = [OTAnnotationPath pathWithStrokeColor:_currentDrawPath.strokeColor];
     }
+    UITouch *touch = [touches anyObject];
+    CGPoint touchPoint = [touch locationInView:touch.view];
+    OTAnnotationPoint *annotatinPoint = [OTAnnotationPoint pointWithX:touchPoint.x andY:touchPoint.y];
+    [_currentDrawPath startAtPoint:annotatinPoint];
+    [OTKLogger logEventAction:KLogActionStartDrawing variation:KLogVariationSuccess completion:nil];
 }
 
 - (void)touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event {
     
     if (_currentDrawPath) {
         UITouch *touch = [touches anyObject];
-        OTAnnotationPoint *touchPoint = [[OTAnnotationPoint alloc] initWithTouchPoint:touch];
-        [_currentDrawPath drawToPoint:touchPoint];
+        CGPoint touchPoint = [touch locationInView:touch.view];
+        OTAnnotationPoint *annotatinPoint = [OTAnnotationPoint pointWithX:touchPoint.x andY:touchPoint.y];
+        [_currentDrawPath drawToPoint:annotatinPoint];
         [self setNeedsDisplay];
     }
 }
 
 - (void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event {
     if (_currentDrawPath) {
-        _currentDrawPath = [OTAnnotationPath pathWithStrokeColor:_currentDrawPath.strokeColor];
+        [self commitCurrentAnnotatable];
         [OTKLogger logEventAction:KLogActionEndDrawing variation:KLogVariationSuccess completion:nil];
     }
 }
 
 @end
-

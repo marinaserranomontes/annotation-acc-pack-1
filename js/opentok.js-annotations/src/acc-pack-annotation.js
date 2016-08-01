@@ -1,5 +1,23 @@
 /* global OT OTSolution OTKAnalytics ScreenSharingAccPack define */
 (function () {
+  /** Include external dependencies */
+  var _;
+  var $;
+  var OTKAnalytics;
+
+  if (typeof module === 'object' && typeof module.exports === 'object') {
+    /* eslint-disable import/no-unresolved */
+    _ = require('underscore');
+    $ = require('jquery');
+    OTKAnalytics = require('opentok-solutions-logging');
+    /* eslint-enable import/no-unresolved */
+  } else {
+    _ = this._;
+    $ = this.$;
+    OTKAnalytics = this.OTKAnalytics;
+  }
+
+  /** Private variables */
   var _this;
   var _accPack;
   var _session;
@@ -79,7 +97,11 @@
   };
 
   var _setupUI = function () {
-    var toolbar = ['<div id="toolbar"></div>'].join('\n');
+    var toolbar = [
+      '<div class="annotation-toolbar-container">',
+      '<div id="toolbar"></div>',
+      '</div>'
+    ].join('\n');
     $('body').append(toolbar);
   };
 
@@ -277,11 +299,7 @@
       'menubar=no',
       'scrollbars=no',
       'resizable=no',
-      'copyhistory=no',
-      ['width=', width].join(''),
-      ['height=', height].join(''),
-      ['left=', ((screen.width / 2) - (width / 2))].join(''),
-      ['top=', ((screen.height / 2) - (height / 2))].join('')
+      'copyhistory=no', ['width=', width].join(''), ['height=', height].join(''), ['left=', ((screen.width / 2) - (width / 2))].join(''), ['top=', ((screen.height / 2) - (height / 2))].join('')
     ].join(',');
 
     var annotationWindow = window.open(url, '', windowFeatures);
