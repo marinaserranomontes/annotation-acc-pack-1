@@ -7,6 +7,53 @@
 
 /* eslint-disable */
 
+/** Analytics */
+var _otkanalytics;
+var _session;
+
+// vars for the analytics logs. Internal use
+var _logEventData = {
+  clientVersion: 'js-vsol-1.0.0',
+  componentId: 'annotationsAccPack',
+  name: 'guidAnnotationsKit',
+  actionStartDrawing: 'Start Drawing',
+  actionEndDrawing: 'End Drawing',
+  variationSuccess: 'Success',
+};
+
+var _logAnalytics = function () {
+  // init the analytics logs
+  var _source = window.location.href;
+
+  var otkanalyticsData = {
+    clientVersion: _logEventData.clientVersion,
+    source: _source,
+    componentId: _logEventData.componentId,
+    name: _logEventData.name
+  };
+
+  _otkanalytics = new OTKAnalytics(otkanalyticsData);
+
+  var sessionInfo = {
+    sessionId: _session.id,
+    connectionId: _session.connection.connectionId,
+    partnerId: _session.apiKey
+  };
+
+  _otkanalytics.addSessionInfo(sessionInfo);
+};
+
+var _log = function (action, variation) {
+  var data = {
+    action: action,
+    variation: variation
+  };
+  _otkanalytics.logEvent(data);
+};
+
+/** End Analytics */
+
+
 //--------------------------------------
 //  OPENTOK ANNOTATION CANVAS/VIEW
 //--------------------------------------
@@ -16,7 +63,6 @@ OTSolution.Annotations = function (options) {
 
   options = options || {};
   this.widgetVersion = 'js-1.0.0-beta';
-
   this.parent = options.container;
   this.videoFeed = options.feed;
   var context = options.externalWindow ? options.externalWindow.document : window.document;
@@ -37,6 +83,7 @@ OTSolution.Annotations = function (options) {
   var self = this,
     ctx,
     cbs = [],
+    isPublisher,
     mirrored,
     scaledToFill,
     batchUpdates = [],
@@ -52,7 +99,8 @@ OTSolution.Annotations = function (options) {
 
 
   // INFO Mirrored feeds contain the OT_mirrored class
-  mirrored = (' ' + self.videoFeed.element.className + ' ').indexOf(' ' + 'OT_mirrored' + ' ') > -1;
+  isPublisher = (' ' + self.videoFeed.element.className + ' ').indexOf(' ' + 'OT_publisher' + ' ') > -1;
+  mirrored = isPublisher ? (' ' + self.videoFeed.element.className + ' ').indexOf(' ' + 'OT_mirrored' + ' ') > -1 : false;
   scaledToFill = (' ' + self.videoFeed.element.className + ' ').indexOf(' ' + 'OT_fit-mode-cover' + ' ') > -1;
 
   this.canvas = function () {
@@ -292,6 +340,7 @@ OTSolution.Annotations = function (options) {
             client.lastX = x;
             client.lastY = y;
             self.isStartPoint = true;
+            !resizeEvent && _log(_logEventData.actionStartDrawing, _logEventData.variationSuccess);
             break;
           case 'mousemove':
           case 'touchmove':
@@ -347,6 +396,7 @@ OTSolution.Annotations = function (options) {
             client.lastY = y;
             !resizeEvent && sendUpdate(update);
             self.isStartPoint = false;
+            !resizeEvent && _log(_logEventData.actionEndDrawing, _logEventData.variationSuccess);
             break;
           case 'mouseout':
             client.dragging = false;
@@ -917,7 +967,7 @@ OTSolution.Annotations = function (options) {
   var drawUpdates = function (updates, resizeEvent) {
 
     updates.forEach(function (update, index) {
-      if (update.id === self.videoFeed.stream.connection.connectionId) {
+      if (self.videoFeed.stream && update.id === self.videoFeed.stream.connection.connectionId) {
         drawIncoming(update, resizeEvent, index);
       }
     });
@@ -1036,6 +1086,16 @@ OTSolution.Annotations.Toolbar = function (options) {
   var _toolbar = this;
 
   options || (options = {});
+
+  if (!options.session) {
+    throw new Error('OpenTok Annotation Widget requires an OpenTok session');
+  } else {
+    _session = options.session;
+  }
+
+  if (!_otkanalytics) {
+    _logAnalytics();
+  }
 
   this.session = options.session;
   this.parent = options.container;

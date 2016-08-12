@@ -7,6 +7,53 @@
 
 /* eslint-disable */
 
+/** Analytics */
+var _otkanalytics;
+var _session;
+
+// vars for the analytics logs. Internal use
+var _logEventData = {
+  clientVersion: 'js-vsol-1.0.0',
+  componentId: 'annotationsAccPack',
+  name: 'guidAnnotationsKit',
+  actionStartDrawing: 'Start Drawing',
+  actionEndDrawing: 'End Drawing',
+  variationSuccess: 'Success',
+};
+
+var _logAnalytics = function () {
+  // init the analytics logs
+  var _source = window.location.href;
+
+  var otkanalyticsData = {
+    clientVersion: _logEventData.clientVersion,
+    source: _source,
+    componentId: _logEventData.componentId,
+    name: _logEventData.name
+  };
+
+  _otkanalytics = new OTKAnalytics(otkanalyticsData);
+
+  var sessionInfo = {
+    sessionId: _session.id,
+    connectionId: _session.connection.connectionId,
+    partnerId: _session.apiKey
+  };
+
+  _otkanalytics.addSessionInfo(sessionInfo);
+};
+
+var _log = function (action, variation) {
+  var data = {
+    action: action,
+    variation: variation
+  };
+  _otkanalytics.logEvent(data);
+};
+
+/** End Analytics */
+
+
 //--------------------------------------
 //  OPENTOK ANNOTATION CANVAS/VIEW
 //--------------------------------------
@@ -16,7 +63,6 @@ OTSolution.Annotations = function (options) {
 
   options = options || {};
   this.widgetVersion = 'js-1.0.0-beta';
-
   this.parent = options.container;
   this.videoFeed = options.feed;
   var context = options.externalWindow ? options.externalWindow.document : window.document;
@@ -37,6 +83,7 @@ OTSolution.Annotations = function (options) {
   var self = this,
     ctx,
     cbs = [],
+    isPublisher,
     mirrored,
     scaledToFill,
     batchUpdates = [],
@@ -52,7 +99,8 @@ OTSolution.Annotations = function (options) {
 
 
   // INFO Mirrored feeds contain the OT_mirrored class
-  mirrored = (' ' + self.videoFeed.element.className + ' ').indexOf(' ' + 'OT_mirrored' + ' ') > -1;
+  isPublisher = (' ' + self.videoFeed.element.className + ' ').indexOf(' ' + 'OT_publisher' + ' ') > -1;
+  mirrored = isPublisher ? (' ' + self.videoFeed.element.className + ' ').indexOf(' ' + 'OT_mirrored' + ' ') > -1 : false;
   scaledToFill = (' ' + self.videoFeed.element.className + ' ').indexOf(' ' + 'OT_fit-mode-cover' + ' ') > -1;
 
   this.canvas = function () {
@@ -292,6 +340,7 @@ OTSolution.Annotations = function (options) {
             client.lastX = x;
             client.lastY = y;
             self.isStartPoint = true;
+            !resizeEvent && _log(_logEventData.actionStartDrawing, _logEventData.variationSuccess);
             break;
           case 'mousemove':
           case 'touchmove':
@@ -347,6 +396,7 @@ OTSolution.Annotations = function (options) {
             client.lastY = y;
             !resizeEvent && sendUpdate(update);
             self.isStartPoint = false;
+            !resizeEvent && _log(_logEventData.actionEndDrawing, _logEventData.variationSuccess);
             break;
           case 'mouseout':
             client.dragging = false;
@@ -917,7 +967,7 @@ OTSolution.Annotations = function (options) {
   var drawUpdates = function (updates, resizeEvent) {
 
     updates.forEach(function (update, index) {
-      if (update.id === self.videoFeed.stream.connection.connectionId) {
+      if (self.videoFeed.stream && update.id === self.videoFeed.stream.connection.connectionId) {
         drawIncoming(update, resizeEvent, index);
       }
     });
@@ -1036,6 +1086,16 @@ OTSolution.Annotations.Toolbar = function (options) {
   var _toolbar = this;
 
   options || (options = {});
+
+  if (!options.session) {
+    throw new Error('OpenTok Annotation Widget requires an OpenTok session');
+  } else {
+    _session = options.session;
+  }
+
+  if (!_otkanalytics) {
+    _logAnalytics();
+  }
 
   this.session = options.session;
   this.parent = options.container;
@@ -1703,16 +1763,17 @@ OTSolution.Annotations.Toolbar = function (options) {
   // vars for the analytics logs. Internal use
   var _logEventData = {
     clientVersion: 'js-vsol-1.0.0',
-    componentId: 'annotationsKit',
+    componentId: 'annotationsAccPack',
     name: 'guidAnnotationsKit',
     actionInitialize: 'Init',
     actionStart: 'Start',
-    actionEnd: 'Done',
-    actionFreeHand: 'FreeHand',
-    actionPickerColor: 'PickerColor',
+    actionEnd: 'End',
+    actionFreeHand: 'Free Hand',
+    actionPickerColor: 'Picker Color',
     actionText: 'Text',
-    actionScreenCapture: 'ScreenCapture',
+    actionScreenCapture: 'Screen Capture',
     actionErase: 'Erase',
+    actionUseToolbar: 'Use Toolbar',
     variationAttempt: 'Attempt',
     variationError: 'Failure',
     variationSuccess: 'Success',
@@ -1771,11 +1832,12 @@ OTSolution.Annotations.Toolbar = function (options) {
 
   var _setupUI = function () {
     var toolbar = [
-      '<div class="annotation-toolbar-container">',
+      '<div id="annotationToolbarContainer" class="annotation-toolbar-container">',
       '<div id="toolbar"></div>',
       '</div>'
     ].join('\n');
     $('body').append(toolbar);
+    _log(_logEventData.actionUseToolbar, _logEventData.variationSuccess);
   };
 
   // Toolbar items
@@ -1897,12 +1959,12 @@ OTSolution.Annotations.Toolbar = function (options) {
       height: height
     });
 
-    $(_elements.canvas).css({
+    $(_elements.canvasContainer).find('canvas').css({
       width: width,
       height: height
     });
 
-    $(_elements.canvas).attr({
+    $(_elements.canvasContainer).find('canvas').attr({
       width: width,
       height: height
     });
@@ -1947,7 +2009,6 @@ OTSolution.Annotations.Toolbar = function (options) {
       var action = actions[id];
 
       if (!!action) {
-        _log(action, _logEventData.variationAttempt);
         _log(action, _logEventData.variationSuccess);
       }
     });
@@ -2009,6 +2070,9 @@ OTSolution.Annotations.Toolbar = function (options) {
   var _removeToolbar = function () {
     $(_elements.resizeSubject).off('resize', _resizeCanvas);
     toolbar.remove();
+    if (!_elements.externalWindow) {
+      $('#annotationToolbarContainer').remove();
+    }
   };
 
   /**
@@ -2024,7 +2088,6 @@ OTSolution.Annotations.Toolbar = function (options) {
    */
   var start = function (session, options) {
     var deferred = $.Deferred();
-    _log(_logEventData.actionStart, _logEventData.variationAttempt);
 
     if (_.property('screensharing')(options)) {
       _createExternalWindow()
@@ -2101,7 +2164,6 @@ OTSolution.Annotations.Toolbar = function (options) {
    * @param {Boolean} publisher Are we the publisher?
    */
   var end = function (publisher) {
-    _log(_logEventData.actionEnd, _logEventData.variationAttempt);
     _removeToolbar();
     _elements.canvas = null;
     if (!!publisher) {
@@ -2114,7 +2176,6 @@ OTSolution.Annotations.Toolbar = function (options) {
     }
     _log(_logEventData.actionEnd, _logEventData.variationSuccess);
   };
-
   /**
    * @constructor
    * Represents an annotation component, used for annotation over video or a shared screen
@@ -2133,11 +2194,10 @@ OTSolution.Annotations.Toolbar = function (options) {
       throw new Error('OpenTok Annotation Accelerator Pack requires an OpenTok session');
     }
     _registerEvents();
-    _setupUI();
     // init analytics logs
     _logAnalytics();
-    _log(_logEventData.actionInitialize, _logEventData.variationAttempt);
     _log(_logEventData.actionInitialize, _logEventData.variationSuccess);
+    _setupUI();
   };
 
   AnnotationAccPack.prototype = {

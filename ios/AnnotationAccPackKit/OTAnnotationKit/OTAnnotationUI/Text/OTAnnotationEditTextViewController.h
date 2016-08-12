@@ -44,6 +44,9 @@
  */
 + (instancetype)defaultWithTextColor:(UIColor *)textColor;
 
+- (instancetype)initWithText:(NSString *)text
+                   textColor:(UIColor *)textColor;
+
 /**
  *  Creates a new annotation edit text object initialized with text, color, and font size.
  *
@@ -55,6 +58,7 @@
  */
 - (instancetype)initWithText:(NSString *)text
                    textColor:(UIColor *)textColor
-                    fontSize:(CGFloat)fontSize;
+                    fontSize:(CGFloat)fontSize
+__attribute__((deprecated("use initWithText:textColor: instead")));
 
 @end

@@ -9,9 +9,9 @@
 #import "JSON.h"
 
 @interface OTAnnotator() <OTSessionDelegate>
-{
-    NSMutableArray *tempPoints;
-}
+@property (nonatomic) BOOL receiveAnnotationEnabled;
+@property (nonatomic) BOOL sendAnnotationEnabled;
+
 @property (nonatomic) OTAnnotationView *annotationView;
 @property (nonatomic) OTAcceleratorSession *session;
 @property (strong, nonatomic) OTAnnotationBlock handler;
@@ -59,6 +59,30 @@
 - (void)connectWithHandler:(OTAnnotationBlock)handler {
     self.handler = handler;
     [self connect];
+}
+
+- (void)connectForReceivingAnnotation {
+    _receiveAnnotationEnabled = YES;
+    _sendAnnotationEnabled = NO;
+    [self connect];
+}
+
+- (void)connectForSendingAnnotation {
+    _receiveAnnotationEnabled = NO;
+    _sendAnnotationEnabled = YES;
+    [self connect];
+}
+
+- (void)connectForReceivingAnnotationWithHandler:(OTAnnotationBlock)handler {
+    _receiveAnnotationEnabled = YES;
+    _sendAnnotationEnabled = NO;
+    [self connectWithHandler:handler];
+}
+
+- (void)connectForSendingAnnotationWithHandler:(OTAnnotationBlock)handler {
+    _receiveAnnotationEnabled = NO;
+    _sendAnnotationEnabled = YES;
+    [self connectWithHandler:handler];
 }
 
 - (void)disconnect {
@@ -111,15 +135,13 @@
 receivedSignalType:(NSString*)type
  fromConnection:(OTConnection*)connection
      withString:(NSString*)string {
-    
-    if (!tempPoints) {
-        tempPoints = [NSMutableArray array];
-    }
 
     // TODO: continue here
     if (self.receiveAnnotationEnabled &&
         self.session.sessionConnectionStatus == OTSessionConnectionStatusConnected &&
         ![self.session.connection.connectionId isEqualToString:connection.connectionId]) {
+        
+        
         
 //        NSArray *jsonArray = [JSON parseJSON:string];
 //        for (NSDictionary *json in jsonArray) {
@@ -141,7 +163,6 @@ receivedSignalType:(NSString*)type
 //                }
 //            }
 //        }
-        
         
         NSArray *jsonArray = [JSON parseJSON:string];
         for (NSDictionary *json in jsonArray) {
@@ -170,29 +191,11 @@ receivedSignalType:(NSString*)type
             
                 if ([json[@"endPoint"] boolValue]) {
                     [self.annotationView commitCurrentAnnotatable];
-                    self.annotationView.currentAnnotatable =[OTAnnotationPath pathWithStrokeColor:[UIColor blueColor]];
+                    self.annotationView.currentAnnotatable = [OTAnnotationPath pathWithStrokeColor:[UIColor blueColor]];
                 }
             }
         }
     }
-    
-    //    OTAnnotationPoint *p1 = [[OTAnnotationPoint alloc] initWithX:119 andY:16];
-    //    OTAnnotationPoint *p2 = [[OTAnnotationPoint alloc] initWithX:122 andY:16];
-    //    OTAnnotationPoint *p3 = [[OTAnnotationPoint alloc] initWithX:126 andY:18];
-    //    OTAnnotationPoint *p4 = [[OTAnnotationPoint alloc] initWithX:134 andY:21];
-    //    OTAnnotationPoint *p5 = [[OTAnnotationPoint alloc] initWithX:144 andY:28];
-    //    OTAnnotationPath *path = [OTAnnotationPath pathWithPoints:@[p1, p2, p3, p4, p5] strokeColor:nil];
-    //    [self.remoteAnnotator.annotationView addAnnotatable:path];
-    //
-    //
-    //    OTAnnotationPoint *p6 = [[OTAnnotationPoint alloc] initWithX:160 andY:16];
-    //    OTAnnotationPoint *p7 = [[OTAnnotationPoint alloc] initWithX:160 andY:20];
-    //    OTAnnotationPoint *p8 = [[OTAnnotationPoint alloc] initWithX:160 andY:24];
-    //    OTAnnotationPoint *p9 = [[OTAnnotationPoint alloc] initWithX:160 andY:26];
-    //    OTAnnotationPoint *p10 = [[OTAnnotationPoint alloc] initWithX:160 andY:30];
-    //    OTAnnotationPath *path1 = [OTAnnotationPath pathWithPoints:@[p6, p7, p8, p9, p10] strokeColor:[UIColor yellowColor]];
-    //    [self.remoteAnnotator.annotationView addAnnotatable:path1];
-    
 }
 
 @end
