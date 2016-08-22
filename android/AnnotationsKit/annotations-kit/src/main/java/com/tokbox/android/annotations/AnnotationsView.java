@@ -226,7 +226,12 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
      */
     public void attachToolbar(AnnotationsToolbar toolbar) {
         mToolbar = toolbar;
-        mToolbar.setActionListener(this);
+        if (toolbar != null) {
+            mToolbar.setActionListener(this);
+        }
+        else {
+            Log.i(LOG_TAG, "Annotations Toolbar is null");
+        }
         addLogEvent(OpenTokConfig.LOG_ACTION_USE_TOOLBAR, OpenTokConfig.LOG_VARIATION_SUCCESS);
     }
 
