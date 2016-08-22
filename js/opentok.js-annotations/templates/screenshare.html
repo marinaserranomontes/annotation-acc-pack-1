@@ -4,15 +4,13 @@
 <meta http-equiv="Content-type" content="text/html; charset=utf-8">
 <title>OpenTok Screen Sharing Solution Annotation</title>
 
-<link rel="stylesheet" href="/styles/root.css">
-
 <script type="text/javascript" charset="utf-8">
 
   var opener;
   var canvas;
 
     if (!toolbar) {
-        alert('Something went wrong: You must pass an OpenTok annotation toolbar object into the window.')
+        alert("Something went wrong: You must pass an OpenTok annotation toolbar object into the window.")
     } else {
         opener = window.opener;
         window.onbeforeunload = window.triggerCloseEvent;
@@ -20,10 +18,10 @@
 
     var createContainerElements = function () {
 
-        var parentDiv = document.getElementById('annotationContainer');
-        var publisherContainer = document.createElement('div');
-        publisherContainer.setAttribute('id', 'screenshare_publisher');
-        publisherContainer.classList.add('publisher-wrap');
+        var parentDiv = document.getElementById("annotationContainer");
+        var publisherContainer = document.createElement("div");
+        publisherContainer.setAttribute("id", "screenshare_publisher");
+        publisherContainer.classList.add("publisher-wrap");
         parentDiv.appendChild(publisherContainer);
 
         return {
@@ -33,8 +31,8 @@
 
     };
 
-    if(navigator.userAgent.indexOf('Firefox') !== -1 ){
-      var ghost = window.open('about:blank');
+    if(navigator.userAgent.indexOf("Firefox") !== -1 ){
+      var ghost = window.open("about:blank");
       ghost.focus();
       ghost.close();
     }
