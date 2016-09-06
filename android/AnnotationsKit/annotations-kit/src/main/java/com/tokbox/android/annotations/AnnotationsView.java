@@ -1,5 +1,5 @@
 package com.tokbox.android.annotations;
-
+import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
@@ -15,13 +15,14 @@ import android.text.Editable;
 import android.text.TextPaint;
 import android.text.TextWatcher;
 import android.util.AttributeSet;
+import android.util.DisplayMetrics;
 import android.util.Log;
-import android.util.TypedValue;
 import android.view.Display;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
@@ -33,63 +34,22 @@ import com.opentok.android.Connection;
 import com.opentok.android.Session;
 import com.tokbox.android.accpack.AccPackSession;
 import com.tokbox.android.annotations.config.OpenTokConfig;
-import com.tokbox.android.annotations.utils.*;
 import com.tokbox.android.logging.OTKAnalytics;
 import com.tokbox.android.logging.OTKAnalyticsData;
-
-import java.util.UUID;
-import java.util.HashMap;
-import java.util.Map;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-
-import android.content.Context;
-import android.content.SharedPreferences;
-import android.content.res.Configuration;
-import android.graphics.Bitmap;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Paint;
-import android.graphics.Point;
-import android.graphics.PointF;
-import android.graphics.Rect;
-import android.os.Build;
-import android.text.Editable;
-import android.text.TextPaint;
-import android.text.TextWatcher;
-import android.util.AttributeSet;
-import android.util.Log;
-import android.util.TypedValue;
-import android.view.Display;
-import android.view.KeyEvent;
-import android.view.MotionEvent;
-import android.view.View;
-import android.view.ViewGroup;
-import android.view.WindowManager;
-import android.view.inputmethod.EditorInfo;
-import android.view.inputmethod.InputMethodManager;
-import android.widget.EditText;
-import android.widget.RelativeLayout;
-import android.widget.TextView;
-
-import com.opentok.android.Connection;
-import com.opentok.android.Session;
-import com.tokbox.android.accpack.AccPackSession;
-import com.tokbox.android.annotations.config.OpenTokConfig;
 import com.tokbox.android.annotations.utils.AnnotationsVideoRenderer;
-import com.tokbox.android.logging.OTKAnalytics;
-import com.tokbox.android.logging.OTKAnalyticsData;
 
+
+import java.lang.reflect.Method;
 import java.util.UUID;
 import java.util.HashMap;
 import java.util.Map;
+import java.lang.Math;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+
 
 
 public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.ActionsListener, AccPackSession.SignalListener {
@@ -261,12 +221,10 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
         int widthPixels = 0;
         int heightPixels = 0;
 
-        if (this.getLayoutParams().width <= 0 || this.getLayoutParams().height <=0 || defaultLayout) {
+        if (this.getLayoutParams() == null || this.getLayoutParams().width <= 0 || this.getLayoutParams().height <=0 || defaultLayout) {
             //default case
             defaultLayout = true;
-            widthPixels = getContext().getResources().getDisplayMetrics().widthPixels;
-            heightPixels = getDisplayContentHeight();
-
+            getScreenRealSize();
         }
         else {
             defaultLayout = false;
@@ -275,14 +233,71 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
         }
 
         LayoutParams params = this.getLayoutParams();
-        this.width = widthPixels;
-        this.height = heightPixels - mToolbar.getHeight();
 
+        params.height = this.height - mToolbar.getHeight() - (this.height - getDisplayHeight());
+        if ( getActionBarHeight() != 0 ){
+            params.height = params.height - getActionBarHeight();
+        }
         params.width = this.width;
-        params.height = this.height;
-
         this.setLayoutParams(params);
+
     }
+
+    private void getScreenRealSize(){
+        Display display =  ((Activity)mContext).getWindowManager().getDefaultDisplay();
+        int realWidth;
+        int realHeight;
+
+        if (Build.VERSION.SDK_INT >= 17){
+            //new pleasant way to get real metrics
+            DisplayMetrics realMetrics = new DisplayMetrics();
+            display.getRealMetrics(realMetrics);
+            realWidth = realMetrics.widthPixels;
+            realHeight = realMetrics.heightPixels;
+
+        } else if (Build.VERSION.SDK_INT >= 14) {
+            //reflection for this weird in-between time
+            try {
+                Method mGetRawH = Display.class.getMethod("getRawHeight");
+                Method mGetRawW = Display.class.getMethod("getRawWidth");
+                realWidth = (Integer) mGetRawW.invoke(display);
+                realHeight = (Integer) mGetRawH.invoke(display);
+            } catch (Exception e) {
+                //this may not be 100% accurate, but it's all we've got
+                realWidth = display.getWidth();
+                realHeight = display.getHeight();
+                Log.e("Display Info", "Couldn't use reflection to get the real display metrics.");
+            }
+
+        } else {
+            //This should be close, as lower API devices should not have window navigation bars
+            realWidth = display.getWidth();
+            realHeight = display.getHeight();
+        }
+
+        this.width = realWidth;
+        this.height = realHeight;
+    }
+
+    private int getDisplayHeight() {
+        final WindowManager windowManager = (WindowManager) getContext()
+                .getSystemService(Context.WINDOW_SERVICE);
+
+        final Point size = new Point();
+        int screenHeight = 0;
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+            windowManager.getDefaultDisplay().getSize(size);
+            screenHeight = size.y;
+        } else {
+            Display d = windowManager.getDefaultDisplay();
+            screenHeight = d.getHeight();
+        }
+
+        return screenHeight;
+
+    }
+
     private int getStatusBarHeight() {
         int result = 0;
         int resourceId = getResources().getIdentifier("status_bar_height", "dimen", "android");
@@ -293,17 +308,17 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
     }
 
     private int getActionBarHeight() {
+
         int actionBarHeight = 0;
-        TypedValue tv = new TypedValue();
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-            if (getContext().getTheme().resolveAttribute(android.R.attr.actionBarSize, tv,
-                    true))
-                actionBarHeight = TypedValue.complexToDimensionPixelSize(
-                        tv.data, getResources().getDisplayMetrics());
-        } else {
-            actionBarHeight = TypedValue.complexToDimensionPixelSize(tv.data,
-                    getResources().getDisplayMetrics());
-        }
+        Rect rect = new Rect();
+        Window window = ((Activity)mContext).getWindow();
+        window.getDecorView().getWindowVisibleDisplayFrame(rect);
+        int statusBarHeight = rect.top;
+        int contentViewTop =
+                window.findViewById(Window.ID_ANDROID_CONTENT).getTop();
+        int titleBarHeight = contentViewTop - statusBarHeight;
+        actionBarHeight = titleBarHeight;
+
         return actionBarHeight;
     }
 
@@ -324,6 +339,8 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
             screenHeight = d.getHeight();
         }
 
+
+        //return screenHeight;
         return (screenHeight - contentTop - actionBarHeight);
     }
     private void init(){
@@ -381,7 +398,6 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
     public boolean onTouchEvent(MotionEvent event) {
         final float x = event.getX();
         final float y = event.getY();
-
         if (  mode != null ) {
             mCurrentColor = mSelectedColor;
             if (mode == Mode.Pen) {
@@ -408,7 +424,6 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
                         upTouch();
                         sendAnnotation(mode.toString(), buildSignalFromPoint(x,y, false, true));
                         addAnnotatable(mSession.getConnection().getConnectionId());
-                        mCurrentPath = null;
                         mAnnotationsActive = false;
                         invalidate();
                         addLogEvent(OpenTokConfig.LOG_ACTION_END_DRAWING, OpenTokConfig.LOG_VARIATION_SUCCESS);
@@ -789,7 +804,7 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
             jsonObject.put("videoWidth", videoWidth);
             jsonObject.put("videoHeight", videoHeight);
             jsonObject.put("canvasWidth", this.width);
-            jsonObject.put("canvasHeight", this.height);
+            jsonObject.put("canvasHeight", getDisplayHeight() - getActionBarHeight());
             jsonObject.put("mirrored", mirrored);
             jsonObject.put("text", text);
             jsonObject.put("start", start);
@@ -818,7 +833,6 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
             videoWidth = videoRenderer.getVideoWidth();
             videoHeight = videoRenderer.getVideoHeight();
         }
-
         try {
             jsonObject.put("id", mSession.getConnection().getConnectionId());
             jsonObject.put("fromId", mSession.getConnection().getConnectionId());
@@ -831,11 +845,11 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
             jsonObject.put("videoWidth", videoWidth);
             jsonObject.put("videoHeight", videoHeight);
             jsonObject.put("canvasWidth", this.width);
-            jsonObject.put("canvasHeight", this.height);
+            jsonObject.put("canvasHeight", getDisplayHeight() - getActionBarHeight());
             jsonObject.put("mirrored", mirrored);
             jsonObject.put("smoothed", false);
             jsonObject.put("startPoint", startPoint);
-            jsonObject.put("endPoint", false);
+            jsonObject.put("endPoint", endPoint);
 
             jsonArray.put(jsonObject);
         } catch (JSONException e) {
@@ -848,8 +862,6 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
 
     @Override
     public void onSignalReceived(Session session, String type, String data, Connection connection) {
-        Log.i(LOG_TAG, type + ": " + data);
-
         String mycid = session.getConnection().getConnectionId();
         String cid = connection.getConnectionId();
 
@@ -888,6 +900,7 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
         }
     }
 
+
     private void penAnnotations(Connection connection, String data){
         mode = Mode.Pen;
         // Build object from JSON array
@@ -897,11 +910,6 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
             for (int i = 0; i < updates.length(); i++) {
                 JSONObject json = updates.getJSONObject(i);
 
-                //TODO: temporary fix for web interoperability
-                if (!json.isNull("text")){
-                    //text-annotations
-                    textAnnotation(connection, data);
-                }
 
                 String id = (String) json.get("id");
                 if (json.get("mirrored") instanceof Number) {
@@ -934,7 +942,6 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
                     if (initialPoint) {
                         mCurrentColor = Color.parseColor(((String) json.get("color")).toLowerCase());
                         mLineWidth = ((Number) json.get("lineWidth")).floatValue();
-                        //changeStrokeWidth(((Number) json.get("lineWidth")).floatValue(), cid);
                         isStartPoint = true;
                     } else {
                         // If the start point flag was already set, we received the next point in the sequence
@@ -945,43 +952,23 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
                     }
                 } else {
                     mCurrentColor = Color.parseColor(((String) json.get("color")).toLowerCase());
-                    //changeColor(Color.parseColor(((String) json.get("color")).toLowerCase()), cid);
-                    //changeStrokeWidth(((Number) json.get("lineWidth")).floatValue(), cid);
                 }
+
 
                 if (videoRenderer != null) {
                     // Handle scale
                     float scale = 1;
 
                     Map<String, Float> canvas = new HashMap<>();
-                    canvas.put("width", (float) this.width);
-                    canvas.put("height", (float) this.height);
-
-                    Map<String, Float> video = new HashMap<>();
-                    video.put("width", (float) videoRenderer.getVideoWidth());
-                    video.put("height", (float) videoRenderer.getVideoHeight());
+                    canvas.put("width", (float) videoRenderer.getVideoWidth());
+                    canvas.put("height", (float) videoRenderer.getVideoHeight());
 
                     Map<String, Float> iCanvas = new HashMap<>();
                     iCanvas.put("width", ((Number) json.get("canvasWidth")).floatValue());
                     iCanvas.put("height", ((Number) json.get("canvasHeight")).floatValue());
 
-                    Map<String, Float> iVideo = new HashMap<>();
-                    iVideo.put("width", ((Number) json.get("videoWidth")).floatValue());
-                    iVideo.put("height", ((Number) json.get("videoHeight")).floatValue());
-
-
                     float canvasRatio = canvas.get("width") / canvas.get("height");
-                    float videoRatio = video.get("width") / video.get("height");
-                    float iCanvasRatio = iCanvas.get("width") / iCanvas.get("height");
-                    float iVideoRatio = iVideo.get("width") / iVideo.get("height");
 
-                    /**
-                     * This assumes that if the width is the greater value, video frames
-                     * can be scaled so that they have equal widths, which can be used to
-                     * find the offset in the y axis. Therefore, the offset on the x axis
-                     * will be 0. If the height is the greater value, the offset on the y
-                     * axis will be 0.
-                     */
                     if (canvasRatio < 0) {
                         scale = canvas.get("width") / iCanvas.get("width");
                     } else {
@@ -990,21 +977,21 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
 
                     Log.i(LOG_TAG, "Scale: " + scale);
 
+                    float centerX = canvas.get("width") / 2f;
+                    float centerY = canvas.get("height") / 2f;
 
-                    float centerX = canvas.get("width") / 2;
-                    float centerY = canvas.get("height") / 2;
+                    float iCenterX = iCanvas.get("width") / 2f;
+                    float iCenterY = iCanvas.get("height") / 2f;
 
-                    float iCenterX = iCanvas.get("width") / 2;
-                    float iCenterY = iCanvas.get("height") / 2;
 
                     float fromX = centerX - (scale * (iCenterX - ((Number) json.get("fromX")).floatValue()));
-                    float fromY = centerY - (scale * (iCenterY - ((Number) json.get("fromY")).floatValue()));
-
                     float toX = centerX - (scale * (iCenterX - ((Number) json.get("toX")).floatValue()));
+
+                    float fromY = centerY - (scale * (iCenterY - ((Number) json.get("fromY")).floatValue()));
                     float toY = centerY - (scale * (iCenterY - ((Number) json.get("toY")).floatValue()));
 
-                    Log.i(LOG_TAG, "From: " + fromX + ", " + fromY);
-                    Log.i(LOG_TAG, "To: " + toX + ", " + toY);
+                    fromY = fromY - getActionBarHeight();
+                    toY = toY - getActionBarHeight();
 
                     if (mSignalMirrored) {
                         Log.i(LOG_TAG, "Signal is mirrored");
@@ -1040,6 +1027,11 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
                         } else {
                             moveTouch(toX, toY, true);
                             mCurrentPath.addPoint(new PointF(toX, toY));
+
+                            if (endPoint) {
+                                addAnnotatable(connection.getConnectionId());
+                                mAnnotationsActive = false;
+                            }
                         }
                     }
                     else {
@@ -1051,6 +1043,7 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
                             beginTouch(fromX, fromY);
                             moveTouch(toX, toY, false);
                             upTouch();
+                            addAnnotatable(connection.getConnectionId());
                         } else if (isStartPoint) {
                             mAnnotationsActive = true;
                             createPathAnnotatable(false);
@@ -1070,15 +1063,10 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
                     invalidate(); // Need this to finalize the drawing on the screen
                 }
             }
-
-            //temporary solution while endpoint is always false
-            if (mAnnotationsActive) {
-                addAnnotatable(connection.getConnectionId());
-                mAnnotationsActive = false;
-            }
         } catch (JSONException e) {
-            Log.e(LOG_TAG, e.getMessage());
+            e.printStackTrace();
         }
+
     }
 
     private void textAnnotation(Connection connection, String data) {
@@ -1136,34 +1124,15 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
                     float scale = 1;
 
                     Map<String, Float> canvas = new HashMap<>();
-                    canvas.put("width", (float) this.width);
-                    canvas.put("height", (float) this.height);
-
-                    Map<String, Float> video = new HashMap<>();
-                    video.put("width", (float) videoRenderer.getVideoWidth());
-                    video.put("height", (float) videoRenderer.getVideoHeight());
+                    canvas.put("width", (float) videoRenderer.getVideoWidth());
+                    canvas.put("height", (float) videoRenderer.getVideoHeight());
 
                     Map<String, Float> iCanvas = new HashMap<>();
                     iCanvas.put("width", ((Number) json.get("canvasWidth")).floatValue());
                     iCanvas.put("height", ((Number) json.get("canvasHeight")).floatValue());
 
-                    Map<String, Float> iVideo = new HashMap<>();
-                    iVideo.put("width", ((Number) json.get("videoWidth")).floatValue());
-                    iVideo.put("height", ((Number) json.get("videoHeight")).floatValue());
-
-
                     float canvasRatio = canvas.get("width") / canvas.get("height");
-                    float videoRatio = video.get("width") / video.get("height");
-                    float iCanvasRatio = iCanvas.get("width") / iCanvas.get("height");
-                    float iVideoRatio = iVideo.get("width") / iVideo.get("height");
 
-                    /**
-                     * This assumes that if the width is the greater value, video frames
-                     * can be scaled so that they have equal widths, which can be used to
-                     * find the offset in the y axis. Therefore, the offset on the x axis
-                     * will be 0. If the height is the greater value, the offset on the y
-                     * axis will be 0.
-                     */
                     if (canvasRatio < 0) {
                         scale = canvas.get("width") / iCanvas.get("width");
                     } else {
@@ -1172,14 +1141,17 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
 
                     Log.i(LOG_TAG, "Scale: " + scale);
 
-                    float centerX = canvas.get("width") / 2;
-                    float centerY = canvas.get("height") / 2;
+                    float centerX = canvas.get("width") / 2f;
+                    float centerY = canvas.get("height") / 2f;
 
-                    float iCenterX = iCanvas.get("width") / 2;
-                    float iCenterY = iCanvas.get("height") / 2;
+                    float iCenterX = iCanvas.get("width") / 2f;
+                    float iCenterY = iCanvas.get("height") / 2f;
+
 
                     float textX = centerX - (scale * (iCenterX - ((Number) json.get("fromX")).floatValue()));
                     float textY = centerY - (scale * (iCenterY - ((Number) json.get("fromY")).floatValue()));
+
+                    textY = textY - getActionBarHeight();
 
                     if (start) {
                         EditText editText = new EditText(getContext());
