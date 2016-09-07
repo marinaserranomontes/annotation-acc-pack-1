@@ -1,4 +1,5 @@
 package com.tokbox.android.annotations;
+
 import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -866,9 +867,7 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
         String cid = connection.getConnectionId();
 
         if (!cid.equals(mycid)) { // Ensure that we only handle signals from other users on the current canvas
-
             if (type.contains(SIGNAL_TYPE)) {
-
                 this.setVisibility(VISIBLE);
                 if (!loaded){
                     resize();
@@ -903,13 +902,13 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
 
     private void penAnnotations(Connection connection, String data){
         mode = Mode.Pen;
+
         // Build object from JSON array
         try {
             JSONArray updates = new JSONArray(data);
 
             for (int i = 0; i < updates.length(); i++) {
                 JSONObject json = updates.getJSONObject(i);
-
 
                 String id = (String) json.get("id");
                 if (json.get("mirrored") instanceof Number) {
@@ -959,9 +958,19 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
                     // Handle scale
                     float scale = 1;
 
+                    float localWidth = (float) videoRenderer.getVideoWidth();
+                    float localHeight = (float) videoRenderer.getVideoHeight();
+
+                    if ( localWidth == 0 ){
+                        localWidth = videoRenderer.getDefaultWidth();
+                    }
+                    if ( localHeight == 0 ){
+                        localHeight = videoRenderer.getDefaultHeight();
+                    }
+
                     Map<String, Float> canvas = new HashMap<>();
-                    canvas.put("width", (float) videoRenderer.getVideoWidth());
-                    canvas.put("height", (float) videoRenderer.getVideoHeight());
+                    canvas.put("width", localWidth);
+                    canvas.put("height", localHeight);
 
                     Map<String, Float> iCanvas = new HashMap<>();
                     iCanvas.put("width", ((Number) json.get("canvasWidth")).floatValue());
@@ -974,8 +983,6 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
                     } else {
                         scale = canvas.get("height") / iCanvas.get("height");
                     }
-
-                    Log.i(LOG_TAG, "Scale: " + scale);
 
                     float centerX = canvas.get("width") / 2f;
                     float centerY = canvas.get("height") / 2f;
