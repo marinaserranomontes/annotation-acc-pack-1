@@ -12,7 +12,7 @@
 #import "OTAnnotationKitBundle.h"
 
 #import <LHToolbar/LHToolbar.h>
-#import <OTKAnalytics/OTKLogger.h>
+#import "AnnLoggingWrapper.h"
 
 #import "OTAnnotationScreenCaptureViewController.h"
 #import "OTAnnotationEditTextViewController.h"
@@ -169,7 +169,7 @@
         [self.toolbar removeContentViewAtIndex:0];
         [self moveSelectionShadowViewTo:nil];
         [self resetToolbarButtons];
-        [OTKLogger logEventAction:KLogActionDone variation:KLogVariationSuccess completion:nil];
+        [[AnnLoggingWrapper sharedInstance].logger logEventAction:KLogActionDone variation:KLogVariationSuccess completion:nil];
     }
     else if (sender == self.annotateButton) {
         self.annotationScrollView.annotatable = YES;
@@ -195,9 +195,20 @@
         [self.annotationScrollView.annotationView undoAnnotatable];
     }
     else if (sender == self.screenshotButton) {
-        self.captureViewController.sharedImage = [self.annotationScrollView.annotationView captureScreen];
+        if (self.toolbarViewDataSource) {
+            self.captureViewController.sharedImage = [self.annotationScrollView.annotationView captureScreenWithView:[self.toolbarViewDataSource annotationToolbarViewForRootViewForScreenShot:self]];
+        }
+        else {
+            self.captureViewController.sharedImage = [self.annotationScrollView.annotationView captureScreenWithView:_annotationScrollView];
+        }
         UIViewController *topViewController = [UIViewController topViewControllerWithRootViewController];
         [topViewController presentViewController:self.captureViewController animated:YES completion:nil];
+    }
+    
+    if (self.toolbarViewDelegate) {
+        
+        NSInteger row = [self.toolbar indexOfContentView:sender];
+        [self.toolbarViewDelegate annotationToolbarView:self didPressToolbarViewItemButtonAtIndexPath:[NSIndexPath indexPathForRow:row inSection:0]];
     }
 
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
@@ -244,7 +255,7 @@
    didSelectColorButton:(OTAnnotationColorPickerViewButton *)button
           selectedColor:(UIColor *)selectedColor {
     
-    [OTKLogger logEventAction:KLogActionPickerColor variation:KLogVariationSuccess completion:nil];
+    [[AnnLoggingWrapper sharedInstance].logger logEventAction:KLogActionPickerColor variation:KLogVariationSuccess completion:nil];
     [self.colorButton setBackgroundColor:selectedColor];
     if (self.annotationScrollView.isAnnotatable) {
         if ([self.annotationScrollView.annotationView.currentAnnotatable isKindOfClass:[OTAnnotationTextView class]]) {

@@ -8,7 +8,7 @@
 #import "OTAnnotator.h"
 #import "JSON.h"
 
-@interface OTAnnotator() <OTSessionDelegate>
+@interface OTAnnotator() <OTSessionDelegate, OTAnnotationViewDelegate>
 @property (nonatomic) BOOL receiveAnnotationEnabled;
 @property (nonatomic) BOOL sendAnnotationEnabled;
 
@@ -20,40 +20,24 @@
 
 @implementation OTAnnotator
 
-+ (instancetype)annotator {
-    return [OTAnnotator sharedInstance];
-}
-
 + (void)setOpenTokApiKey:(NSString *)apiKey
                sessionId:(NSString *)sessionId
-                   token:(NSString *)token; {
+                   token:(NSString *)token {
     
     [OTAcceleratorSession setOpenTokApiKey:apiKey sessionId:sessionId token:token];
-    [OTAnnotator sharedInstance];
 }
 
-+ (instancetype)sharedInstance {
-    
-    static OTAnnotator *sharedInstance;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        sharedInstance = [[OTAnnotator alloc] init];
-        sharedInstance.session = [OTAcceleratorSession getAcceleratorPackSession];
-    });
-    
-    return sharedInstance;
+- (instancetype)init {
+    if (self = [super init]) {
+        _session = [OTAcceleratorSession getAcceleratorPackSession];
+    }
+    return self;
 }
 
-- (void)connect {
-    if (!self.delegate && !self.handler) return;
+- (NSError *)connect {
+    if (!self.delegate && !self.handler) return nil;
     
-    NSError *registerError = [OTAcceleratorSession registerWithAccePack:self];
-    if (registerError) {
-    
-    }
-    else {
-        
-    }
+    return [OTAcceleratorSession registerWithAccePack:self];
 }
 
 - (void)connectWithHandler:(OTAnnotationBlock)handler {
@@ -61,16 +45,16 @@
     [self connect];
 }
 
-- (void)connectForReceivingAnnotation {
+- (NSError *)connectForReceivingAnnotation {
     _receiveAnnotationEnabled = YES;
     _sendAnnotationEnabled = NO;
-    [self connect];
+    return [self connect];
 }
 
-- (void)connectForSendingAnnotation {
+- (NSError *)connectForSendingAnnotation {
     _receiveAnnotationEnabled = NO;
     _sendAnnotationEnabled = YES;
-    [self connect];
+    return [self connect];
 }
 
 - (void)connectForReceivingAnnotationWithHandler:(OTAnnotationBlock)handler {
@@ -85,15 +69,9 @@
     [self connectWithHandler:handler];
 }
 
-- (void)disconnect {
+- (NSError *)disconnect {
     
-    NSError *disconnectError = [OTAcceleratorSession deregisterWithAccePack:self];
-    if (!disconnectError) {
-        
-    }
-    else {
-        
-    }
+    return [OTAcceleratorSession deregisterWithAccePack:self];
 }
 
 - (void)notifiyAllWithSignal:(OTAnnotationSignal)signal error:(NSError *)error {
@@ -109,6 +87,7 @@
 
 - (void) sessionDidConnect:(OTSession *)session {
     self.annotationView = [[OTAnnotationView alloc] initWithFrame:[UIScreen mainScreen].bounds];
+    self.annotationView.annotationViewDelegate = self;
     [self.annotationView setCurrentAnnotatable:[OTAnnotationPath pathWithStrokeColor:nil]];
     [self notifiyAllWithSignal:OTAnnotationSessionDidConnect
                          error:nil];
@@ -141,28 +120,9 @@ receivedSignalType:(NSString*)type
         self.session.sessionConnectionStatus == OTSessionConnectionStatusConnected &&
         ![self.session.connection.connectionId isEqualToString:connection.connectionId]) {
         
-        
-        
-//        NSArray *jsonArray = [JSON parseJSON:string];
-//        for (NSDictionary *json in jsonArray) {
-//            if ([self.annotationView.currentAnnotatable isKindOfClass:[OTAnnotationPath class]]) {
-//                
-//                CGFloat fromX = [json[@"fromX"] floatValue];
-//                CGFloat fromY = [json[@"fromY"] floatValue];
-//                CGFloat toX = [json[@"toX"] floatValue];
-//                CGFloat toY = [json[@"toY"] floatValue];
-//                OTAnnotationPoint *pt1 = [OTAnnotationPoint pointWithX:fromX andY:fromY];
-//                OTAnnotationPoint *pt2 = [OTAnnotationPoint pointWithX:toX andY:toY];
-//                
-//                [tempPoints addObject:pt1];
-//                [tempPoints addObject:pt2];
-//                
-//                if ([json[@"endPoint"] boolValue]) {
-//                    [self.annotationView addAnnotatable:[OTAnnotationPath pathWithPoints:tempPoints strokeColor:nil]];
-//                    [tempPoints removeAllObjects];
-//                }
-//            }
-//        }
+        if (!self.annotationView.currentAnnotatable) {
+            self.annotationView.currentAnnotatable = [OTAnnotationPath pathWithStrokeColor:[UIColor blueColor]];
+        }
         
         NSArray *jsonArray = [JSON parseJSON:string];
         for (NSDictionary *json in jsonArray) {
@@ -172,12 +132,43 @@ receivedSignalType:(NSString*)type
                     self.annotationView.currentAnnotatable = [OTAnnotationPath pathWithStrokeColor:nil];
                 }
                 
-                CGFloat fromX = [json[@"fromX"] floatValue];
-                CGFloat fromY = [json[@"fromY"] floatValue];
-                CGFloat toX = [json[@"toX"] floatValue];
-                CGFloat toY = [json[@"toY"] floatValue];
-                OTAnnotationPoint *pt1 = [OTAnnotationPoint pointWithX:fromX andY:fromY];
-                OTAnnotationPoint *pt2 = [OTAnnotationPoint pointWithX:toX andY:toY];
+                // canvas x and y
+                CGFloat canvasWidth = [json[@"canvasWidth"] floatValue];
+                CGFloat canvasHeight = [json[@"canvasHeight"] floatValue];
+                
+                // apply scale factor
+                CGFloat scale = 1.0f;
+                if (CGRectGetWidth(self.annotationView.bounds) < CGRectGetHeight(self.annotationView.bounds)) {
+                    scale = CGRectGetHeight(self.annotationView.bounds) / canvasHeight;
+                }
+                else if (CGRectGetWidth(self.annotationView.bounds) > CGRectGetHeight(self.annotationView.bounds)) {
+                    scale = CGRectGetWidth(self.annotationView.bounds) / canvasWidth;
+                }
+                
+                CGFloat canvasCenterX = canvasWidth / 2.0f * scale;
+                CGFloat canvasCenterY = canvasHeight / 2.0f * scale;
+                
+                // remote x and y
+                CGFloat fromX = [json[@"fromX"] floatValue] * scale;
+                CGFloat fromY = [json[@"fromY"] floatValue] * scale;
+                CGFloat toX = [json[@"toX"] floatValue] * scale;
+                CGFloat toY = [json[@"toY"] floatValue] * scale;
+                
+                OTAnnotationPoint *pt1;
+                OTAnnotationPoint *pt2;
+                
+                if (CGRectGetHeight(self.annotationView.bounds) >= CGRectGetWidth(self.annotationView.bounds)) {
+                    CGFloat actualDrawingFromX = fromX - (canvasCenterX - self.annotationView.center.x);
+                    CGFloat actualDrawingToX = toX - (canvasCenterX - self.annotationView.center.x);
+                    pt1 = [OTAnnotationPoint pointWithX:actualDrawingFromX andY:fromY];
+                    pt2 = [OTAnnotationPoint pointWithX:actualDrawingToX andY:toY];
+                }
+                else {
+                    CGFloat actualDrawingFromY = fromY - (canvasCenterY - self.annotationView.center.y);
+                    CGFloat actualDrawingToY = toY - (canvasCenterY - self.annotationView.center.y);
+                    pt1 = [OTAnnotationPoint pointWithX:fromX andY:actualDrawingFromY];
+                    pt2 = [OTAnnotationPoint pointWithX:toX andY:actualDrawingToY];
+                }
                 
                 OTAnnotationPath *path = (OTAnnotationPath *)self.annotationView.currentAnnotatable;
                 if (path.points.count == 0) {
@@ -194,6 +185,58 @@ receivedSignalType:(NSString*)type
                     self.annotationView.currentAnnotatable = [OTAnnotationPath pathWithStrokeColor:[UIColor blueColor]];
                 }
             }
+        }
+    }
+}
+
+#pragma mark - OTAnnotationViewDelegate
+
+- (void)annotationView:(OTAnnotationView *)annotationView
+            touchBegan:(UITouch *)touch
+             withEvent:(UIEvent *)event {
+    [self signalAnnotatble:annotationView.currentAnnotatable touch:touch addtionalInfo:@{@"startPoint":@(YES)}];
+}
+
+- (void)annotationView:(OTAnnotationView *)annotationView
+            touchMoved:(UITouch *)touch
+             withEvent:(UIEvent *)event {
+    [self signalAnnotatble:annotationView.currentAnnotatable touch:touch addtionalInfo:nil];
+}
+
+- (void)annotationView:(OTAnnotationView *)annotationView
+            touchEnded:(UITouch *)touch
+             withEvent:(UIEvent *)event {
+    [self signalAnnotatble:annotationView.currentAnnotatable touch:touch addtionalInfo:@{@"endPoint":@(YES)}];
+}
+
+- (void)signalAnnotatble:(id<OTAnnotatable>)annotatble
+                   touch:(UITouch *)touch
+           addtionalInfo:(NSDictionary *)info{
+    
+    if ([annotatble isKindOfClass:[OTAnnotationPath class]]) {
+        
+        CGPoint touchPoint = [touch locationInView:touch.view];
+        
+        NSMutableDictionary *paramDict = [NSMutableDictionary dictionaryWithDictionary:info];
+        paramDict[@"id"] = self.session.connection.connectionId;
+        paramDict[@"fromId"] = self.session.connection.connectionId;
+        paramDict[@"fromX"] = @(touchPoint.x);
+        paramDict[@"fromY"] = @(touchPoint.y);
+        paramDict[@"toX"] = @(touchPoint.x + 0.1);
+        paramDict[@"toY"] = @(touchPoint.y + 0.1);
+        paramDict[@"lineWidth"] = @(10);
+        paramDict[@"videoWidth"] = @(CGRectGetWidth(self.annotationView.bounds));
+        paramDict[@"videoHeight"] = @(CGRectGetHeight(self.annotationView.bounds));
+        paramDict[@"canvasWidth"] = @(CGRectGetWidth(self.annotationView.bounds));
+        paramDict[@"canvasHeight"] = @(CGRectGetHeight(self.annotationView.bounds));
+        paramDict[@"mirrored"] = @(NO);
+        paramDict[@"smoothed"] = @(NO);
+        
+        NSString *jsonString = [JSON stringify:@[paramDict]];
+        NSError *error;
+        [[OTAcceleratorSession getAcceleratorPackSession] signalWithType:@"testing" string:jsonString connection:nil error:&error];
+        if (error) {
+            NSLog(@"%@", error);
         }
     }
 }

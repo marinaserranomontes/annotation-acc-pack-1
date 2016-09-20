@@ -7,6 +7,10 @@ import android.widget.EditText;
 
 import java.util.UUID;
 
+
+/**
+ * Defines the annotations view text
+ */
 public class AnnotationsText implements View.OnClickListener{
 
     private UUID id;

@@ -14,6 +14,9 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 
+/**
+ * Defines the annotations manager
+ */
 public class AnnotationsManager {
 
     private ArrayList<Annotatable> mAnnotatableList;

@@ -32,21 +32,21 @@ typedef void (^OTAnnotationBlock)(OTAnnotationSignal signal, NSError *error);
  */
 @property (readonly, nonatomic, getter=isSendAnnotationEnabled) BOOL sendAnnotationEnabled;
 
-+ (instancetype)annotator;
+- (instancetype)init;
 
 + (void)setOpenTokApiKey:(NSString *)apiKey
                sessionId:(NSString *)sessionId
                    token:(NSString *)token;
 
-- (void)connectForReceivingAnnotation;
+- (NSError *)connectForReceivingAnnotation;
 
-- (void)connectForSendingAnnotation;
+- (NSError *)connectForSendingAnnotation;
 
 - (void)connectForReceivingAnnotationWithHandler:(OTAnnotationBlock)handler;
 
 - (void)connectForSendingAnnotationWithHandler:(OTAnnotationBlock)handler;
 
-- (void)disconnect;
+- (NSError *)disconnect;
 
 @property (weak, nonatomic) id<AnnotationDelegate> delegate;
 

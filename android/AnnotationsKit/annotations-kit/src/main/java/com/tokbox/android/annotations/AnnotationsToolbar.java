@@ -9,9 +9,12 @@ import android.view.WindowManager;
 import android.widget.HorizontalScrollView;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-
+/**
+ * Defines the layout for the annotations toolbar
+ */
 public class AnnotationsToolbar extends LinearLayout {
 
     private View rootView;
@@ -20,10 +23,10 @@ public class AnnotationsToolbar extends LinearLayout {
     private ImageButton mTypeBtn;
     private ImageButton mScreenshotBtn;
     private ImageButton mPickerColorBtn;
-    private TextView mDoneBtn;
+    private ImageButton mDoneBtn;
 
     private Context mContext;
-    private LinearLayout mMainToolbar;
+    private RelativeLayout mMainToolbar;
     private LinearLayout mColorToolbar;
     private HorizontalScrollView mColorScrollView;
 
@@ -86,7 +89,7 @@ public class AnnotationsToolbar extends LinearLayout {
 
     private void init() {
         rootView = inflate(mContext, R.layout.annotations_toolbar, this);
-        mMainToolbar = (LinearLayout) rootView.findViewById(R.id.main_toolbar);
+        mMainToolbar = (RelativeLayout) rootView.findViewById(R.id.main_toolbar);
 
         mColorToolbar = (LinearLayout) rootView.findViewById(R.id.color_toolbar);
         mColorScrollView = (HorizontalScrollView) rootView.findViewById(R.id.color_view);
@@ -95,7 +98,7 @@ public class AnnotationsToolbar extends LinearLayout {
         mTypeBtn = (ImageButton) mMainToolbar.findViewById(R.id.type_tool);
         mScreenshotBtn = (ImageButton) mMainToolbar.findViewById(R.id.screenshot);
         mEraseBtn = (ImageButton) mMainToolbar.findViewById(R.id.erase);
-        mDoneBtn = (TextView) mMainToolbar.findViewById(R.id.done);
+        mDoneBtn = (ImageButton) mMainToolbar.findViewById(R.id.done);
 
         final int mCount = mColorToolbar.getChildCount();
 
@@ -203,6 +206,13 @@ public class AnnotationsToolbar extends LinearLayout {
                         v.setSelected(false);
                     } else {
                         v.setSelected(true);
+                    }
+
+                    mDoneBtn.setVisibility(VISIBLE);
+                }
+                else {
+                    if (v.getId() == R.id.done){
+                        mDoneBtn.setVisibility(GONE);
                     }
                 }
                 mActionsListener.onItemSelected(v, v.isSelected());

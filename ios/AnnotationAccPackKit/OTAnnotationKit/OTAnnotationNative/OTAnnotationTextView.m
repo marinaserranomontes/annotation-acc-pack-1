@@ -5,7 +5,7 @@
 //
 
 #import "OTAnnotationTextView.h"
-#import <OTKAnalytics/OTKLogger.h>
+#import "AnnLoggingWrapper.h"
 
 #import "OTAnnotationTextView+Gesture.h"
 #import "OTAnnotationTextView_Gesture.h"
@@ -196,7 +196,7 @@ NSString *const OTAnnotationTextViewDidCancelChangeNotification = @"OTAnnotation
     self.cancelButton = nil;
     
     [self setUserInteractionEnabled:NO];
-    [OTKLogger logEventAction:KLogActionText variation:KLogVariationSuccess completion:nil];
+    [[AnnLoggingWrapper sharedInstance].logger logEventAction:KLogActionText variation:KLogVariationSuccess completion:nil];
 }
 
 - (void)resizeTextView {

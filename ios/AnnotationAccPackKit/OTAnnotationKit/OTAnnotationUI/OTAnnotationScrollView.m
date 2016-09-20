@@ -16,12 +16,14 @@
 #import "OTAnnotationToolbarView_Private.h"
 
 #import "UIViewController+Helper.h"
-#import <OTKAnalytics/OTKLogger.h>
+#import "AnnLoggingWrapper.h"
 
 #import "Constants.h"
 
 @interface OTAnnotationScrollView() <UIScrollViewDelegate>
 @property (nonatomic) OTAnnotationView *annotationView;
+@property (nonatomic) UIView *scrollContentView;
+@property (nonatomic) UIScrollView *scrollView;
 @property (nonatomic) OTAnnotationToolbarView *toolbarView;
 
 @property (nonatomic) NSLayoutConstraint *annotationScrollViewWidth;
@@ -32,50 +34,24 @@
 - (void)setAnnotatable:(BOOL)annotatable {
     _annotatable = annotatable;
     
-    if (self.scrollView.contentSize.width > CGRectGetWidth(self.frame) || self.scrollView.contentSize.height > CGRectGetHeight(self.frame)) {
-        self.scrollView.scrollEnabled = !_annotatable;
-    }
-    
-    if (self.zoomEnabled) {
-        self.scrollView.pinchGestureRecognizer.enabled = !_annotatable;
-    }
-    
     if (!_annotatable) {
         [self.annotationView setCurrentAnnotatable:nil];
-        [self.annotationView setUserInteractionEnabled:NO];
+        
     }
-    else {
-        [self.annotationView setUserInteractionEnabled:YES];
-    }
-}
-
-- (void)setZoomEnabled:(BOOL)zoomEnabled {
-    _zoomEnabled = zoomEnabled;
     
-    if (_zoomEnabled) {
-        _scrollView.maximumZoomScale = 3.0f;
-    }
-    else {
-        _scrollView.maximumZoomScale = 1.0f;
-    }
+    self.scrollView.scrollEnabled = !_annotatable;
+    [self.annotationView setUserInteractionEnabled:_annotatable];
 }
 
-- (void)setFrame:(CGRect)frame {
-    [super setFrame:frame];
-    self.scrollView.frame = CGRectMake(0, 0, frame.size.width, frame.size.height);
-    self.annotationScrollViewWidth.constant = frame.size.width;
-    self.annotationScrollViewHeigth.constant = frame.size.height;
-}
-
-- (instancetype)initWithFrame:(CGRect)frame {
+- (instancetype)init {
     
-    if (self = [super initWithFrame:frame]) {
+    if (self = [super init]) {
+        
+        self.translatesAutoresizingMaskIntoConstraints = NO;
         
         // scroll view
-        _zoomEnabled = YES;
         _scrollView = [[UIScrollView alloc] init];
         _scrollView.translatesAutoresizingMaskIntoConstraints = NO;
-        _scrollView.maximumZoomScale = 3.0f;
         _scrollView.delegate = self;
         [self addSubview:_scrollView];
         [NSLayoutConstraint constraintWithItem:_scrollView
@@ -131,7 +107,7 @@
                                                                          toItem:nil
                                                                       attribute:NSLayoutAttributeNotAnAttribute
                                                                      multiplier:1.0
-                                                                       constant:CGRectGetWidth(frame)];
+                                                                       constant:self.scrollView.contentSize.width];
         _annotationScrollViewWidth.active = YES;
         _annotationScrollViewHeigth = [NSLayoutConstraint constraintWithItem:_scrollContentView
                                                                       attribute:NSLayoutAttributeHeight
@@ -139,9 +115,8 @@
                                                                          toItem:nil
                                                                       attribute:NSLayoutAttributeNotAnAttribute
                                                                      multiplier:1.0
-                                                                       constant:CGRectGetHeight(frame)];
+                                                                       constant:self.scrollView.contentSize.height];
         _annotationScrollViewHeigth.active = YES;
-        [self.scrollView setContentSize:CGSizeMake(self.annotationScrollViewWidth.constant, self.annotationScrollViewHeigth.constant)];
         
         // annotation view
         _annotationView = [[OTAnnotationView alloc] init];
@@ -177,8 +152,25 @@
                                       constant:0.0].active = YES;
         
         self.annotatable = NO;
+        
+        [self.scrollView addObserver:self
+                          forKeyPath:@"contentSize"
+                             options:NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld
+                             context:nil];
     }
     return self;
+}
+
+- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSString *,id> *)change context:(void *)context {
+    
+    if (object == self.scrollView && [keyPath isEqualToString:@"contentSize"]) {
+        self.annotationScrollViewWidth.constant = self.scrollView.contentSize.width;
+        self.annotationScrollViewHeigth.constant = self.scrollView.contentSize.height;
+    }
+}
+
+- (void)dealloc {
+    [self.scrollView removeObserver:self forKeyPath:@"contentSize"];
 }
 
 - (void)addSubview:(UIView *)view {
@@ -187,25 +179,16 @@
 }
 
 - (void)addContentView:(UIView *)view {
-
-    CGFloat width = CGRectGetWidth(view.bounds) > self.annotationScrollViewWidth.constant ? CGRectGetWidth(view.bounds) : self.annotationScrollViewWidth.constant;
-    CGFloat height = CGRectGetHeight(view.bounds) > self.annotationScrollViewHeigth.constant ? CGRectGetHeight(view.bounds) : self.annotationScrollViewHeigth.constant;
-    
-    [self.scrollView setContentSize:CGSizeMake(width, height)];
     [self.scrollContentView insertSubview:view belowSubview:self.annotationView];
-    
-    self.annotationScrollViewWidth.constant = width;
-    self.annotationScrollViewHeigth.constant = height;
 }
 
 - (void)initializeToolbarView {
     CGRect mainBounds = [UIScreen mainScreen].bounds;
     self.toolbarView = [[OTAnnotationToolbarView alloc] initWithFrame:CGRectMake(0, 0, CGRectGetWidth(mainBounds), DefaultToolbarHeight) annotationScrollView:self];
-    [OTKLogger logEventAction:KLogActionUseToolbar variation:KLogVariationSuccess completion:nil];
+    [[AnnLoggingWrapper sharedInstance].logger logEventAction:KLogActionUseToolbar variation:KLogVariationSuccess completion:nil];
 }
 
 - (void)addTextAnnotation:(OTAnnotationTextView *)annotationTextView {
-    [self.scrollView setZoomScale:1.0 animated:NO];   // this will need to reset in case that added text view is out of bound
     annotationTextView.frame = CGRectMake(self.scrollView.contentOffset.x + LeadingPaddingOfAnnotationTextView,
                                           self.scrollView.contentOffset.y + annotationTextView.frame.origin.y,
                                           CGRectGetWidth(annotationTextView.bounds),

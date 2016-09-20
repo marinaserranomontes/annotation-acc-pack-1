@@ -8,6 +8,7 @@ import UIKit
 
 class AnnotationOnScreenViewController: UIViewController {
     private let annotationOverContentViewController = OTFullScreenAnnotationViewController()
+    @IBOutlet weak var holderView: UIView!
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -23,7 +24,7 @@ class AnnotationOnScreenViewController: UIViewController {
     }
     
     @IBAction func viewPressed(sender: UIView!) {
-        self.view.bringSubviewToFront(sender)
+        holderView.bringSubviewToFront(sender)
     }
     
     
