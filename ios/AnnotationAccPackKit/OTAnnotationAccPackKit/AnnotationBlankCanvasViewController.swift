@@ -6,82 +6,56 @@
 
 class AnnotationBlankCanvasViewController: UIViewController {
     
+    let topOffset: CGFloat = 20 + 44
+    let topOffsetForLandscape: CGFloat = 44
+    let heightOfToolbar = CGFloat(50)
+    let widthOfToolbar = CGFloat(50)
+    let annotationScrollView = OTAnnotationScrollView()
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        let screenShareView = OTAnnotationScrollView()
-        screenShareView.scrollView.contentSize = CGSizeMake(CGRectGetWidth(UIScreen.mainScreen().bounds), CGRectGetHeight(UIScreen.mainScreen().bounds) - 50 - 64)
+        navigationController?.navigationBar.translucent = false
         
-        screenShareView.initializeToolbarView()
-        screenShareView.toolbarView!.translatesAutoresizingMaskIntoConstraints = false
+        annotationScrollView.frame = CGRectMake(0, 0, CGRectGetWidth(UIScreen.mainScreen().bounds), CGRectGetHeight(UIScreen.mainScreen().bounds) - heightOfToolbar - topOffset)
+        annotationScrollView.scrollView.contentSize = CGSizeMake(CGRectGetWidth(UIScreen.mainScreen().bounds), CGRectGetHeight(UIScreen.mainScreen().bounds) - heightOfToolbar - topOffset)
         
-        self.view.addSubview(screenShareView)
-        self.view.addSubview(screenShareView.toolbarView!)
+        annotationScrollView.initializeToolbarView()
+        annotationScrollView.toolbarView!.frame = CGRectMake(0, CGRectGetHeight(UIScreen.mainScreen().bounds) - heightOfToolbar - topOffset, CGRectGetWidth(UIScreen.mainScreen().bounds), heightOfToolbar)
         
-        NSLayoutConstraint(item: screenShareView,
-                           attribute: .Top,
-                           relatedBy: .Equal,
-                           toItem: view,
-                           attribute: .Top,
-                           multiplier: 1.0,
-                           constant: 0.0).active = true
+        view.addSubview(annotationScrollView)
+        view.addSubview(annotationScrollView.toolbarView!)
+    }
+    
+    
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
         
-        NSLayoutConstraint(item: screenShareView,
-                           attribute: .Left,
-                           relatedBy: .Equal,
-                           toItem: view,
-                           attribute: .Left,
-                           multiplier: 1.0,
-                           constant: 0.0).active = true
+        let screenRect = UIScreen.mainScreen().bounds;
         
-        NSLayoutConstraint(item: screenShareView,
-                           attribute: .Right,
-                           relatedBy: .Equal,
-                           toItem: view,
-                           attribute: .Right,
-                           multiplier: 1.0,
-                           constant: 0.0).active = true
-        
-        NSLayoutConstraint(item: screenShareView,
-                           attribute: .Bottom,
-                           relatedBy: .Equal,
-                           toItem: screenShareView.toolbarView!,
-                           attribute: .Top,
-                           multiplier: 1.0,
-                           constant: 0.0).active = true
-        
-        let height = screenShareView.toolbarView!.bounds.size.height
-        NSLayoutConstraint(item: screenShareView.toolbarView!,
-                           attribute: .Bottom,
-                           relatedBy: .Equal,
-                           toItem: view,
-                           attribute: .Bottom,
-                           multiplier: 1.0,
-                           constant: 0.0).active = true
-        
-        NSLayoutConstraint(item: screenShareView.toolbarView!,
-                           attribute: .Left,
-                           relatedBy: .Equal,
-                           toItem: view,
-                           attribute: .Left,
-                           multiplier: 1.0,
-                           constant: 0.0).active = true
-        
-        NSLayoutConstraint(item: screenShareView.toolbarView!,
-                           attribute: .Right,
-                           relatedBy: .Equal,
-                           toItem: view,
-                           attribute: .Right,
-                           multiplier: 1.0,
-                           constant: 0.0).active = true
-        
-        NSLayoutConstraint(item: screenShareView.toolbarView!,
-                           attribute: .Height,
-                           relatedBy: .Equal,
-                           toItem: nil,
-                           attribute: .NotAnAttribute,
-                           multiplier: 1.0,
-                           constant: height).active = true
-        
+        // portrait
+        if CGRectGetWidth(screenRect) < CGRectGetHeight(screenRect) {
+            annotationScrollView.frame = CGRectMake(0, 0, CGRectGetWidth(screenRect), CGRectGetHeight(screenRect) - heightOfToolbar - topOffset)
+            annotationScrollView.scrollView.contentSize = CGSizeMake(CGRectGetWidth(screenRect), CGRectGetHeight(screenRect) - heightOfToolbar - topOffset)
+            
+            annotationScrollView.toolbarView!.frame = CGRectMake(0, CGRectGetHeight(screenRect) - heightOfToolbar - topOffset, CGRectGetWidth(screenRect), heightOfToolbar)
+            annotationScrollView.toolbarView?.toolbarViewOrientation = .PortraitlBottom
+        }
+        else {
+            
+            // landscape left
+//            annotationScrollView.frame = CGRectMake(widthOfToolbar, 0, CGRectGetWidth(screenRect) - widthOfToolbar, CGRectGetHeight(screenRect) - topOffsetForLandscape)
+//            annotationScrollView.scrollView.contentSize = CGSizeMake(CGRectGetWidth(screenRect) - widthOfToolbar, CGRectGetHeight(screenRect) - topOffsetForLandscape)
+//            
+//            annotationScrollView.toolbarView!.frame = CGRectMake(0, 0, widthOfToolbar, CGRectGetHeight(screenRect) - topOffsetForLandscape)
+//            annotationScrollView.toolbarView?.toolbarViewOrientation = .LandscapeLeft
+
+            // landscape right
+            annotationScrollView.frame = CGRectMake(0, 0, CGRectGetWidth(screenRect) - widthOfToolbar, CGRectGetHeight(screenRect) - topOffsetForLandscape)
+            annotationScrollView.scrollView.contentSize = CGSizeMake(CGRectGetWidth(screenRect) - widthOfToolbar, CGRectGetHeight(screenRect) - topOffsetForLandscape)
+            
+            annotationScrollView.toolbarView!.frame = CGRectMake(CGRectGetWidth(screenRect) - widthOfToolbar, 0, widthOfToolbar, CGRectGetHeight(screenRect) - topOffsetForLandscape)
+            annotationScrollView.toolbarView?.toolbarViewOrientation = .LandscapeRight
+        }
     }
 }

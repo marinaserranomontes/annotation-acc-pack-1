@@ -16,6 +16,7 @@
 
 #import "OTAnnotationScreenCaptureViewController.h"
 #import "OTAnnotationEditTextViewController.h"
+#import "UIView+Helper.h"
 #import "UIViewController+Helper.h"
 #import "Constants.h"
 
@@ -25,7 +26,7 @@
 @property (nonatomic) LHToolbar *toolbar;
 @property (weak, nonatomic) OTAnnotationScrollView *annotationScrollView;
 
-@property (nonatomic) UIButton *doneButton;
+@property (nonatomic) OTAnnotationToolbarDoneButton *doneButton;
 @property (nonatomic) OTAnnotationToolbarButton *annotateButton;
 @property (nonatomic) OTAnnotationColorPickerViewButton *colorButton;
 @property (nonatomic) OTAnnotationToolbarButton *textButton;
@@ -42,6 +43,21 @@
     if (!annotationScrollView) {
         [[NSNotificationCenter defaultCenter] removeObserver:OTAnnotationTextViewDidCancelChangeNotification];
     }
+}
+
+- (void)setToolbarViewOrientation:(OTAnnotationToolbarViewOrientation)toolbarViewOrientation {
+    _toolbarViewOrientation = toolbarViewOrientation;
+    
+    if (toolbarViewOrientation == OTAnnotationToolbarViewOrientationPortraitlBottom) {
+        self.toolbar.orientation = LHToolbarOrientationHorizontal;
+        self.colorPickerView.annotationColorPickerViewOrientation = OTAnnotationColorPickerViewOrientationPortrait;
+    }
+    else if (toolbarViewOrientation == OTAnnotationToolbarViewOrientationLandscapeLeft ||
+             toolbarViewOrientation == OTAnnotationToolbarViewOrientationLandscapeRight) {
+        self.toolbar.orientation = LHToolbarOrientationVertical;
+        self.colorPickerView.annotationColorPickerViewOrientation = OTAnnotationColorPickerViewOrientationLandscape;
+    }
+    [self.toolbar reloadToolbar];
 }
 
 - (OTAnnotationColorPickerView *)colorPickerView {
@@ -64,14 +80,13 @@
 - (UIButton *)doneButton {
     if (!_doneButton) {
         
-        _doneButton = [[UIButton alloc] initWithFrame:CGRectMake(0, 0, CGRectGetWidth([UIScreen mainScreen].bounds) / 6, CGRectGetHeight(self.bounds))];
-        [_doneButton.titleLabel setFont:[UIFont systemFontOfSize:12.0f]];
-        [_doneButton setImage:[UIImage imageNamed:@"checkmark" inBundle:[OTAnnotationKitBundle annotationKitBundle] compatibleWithTraitCollection:nil] forState:UIControlStateNormal];
-        _doneButton.imageView.contentMode = UIViewContentModeScaleAspectFit;
-        [_doneButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+        _doneButton = [[OTAnnotationToolbarDoneButton alloc] init];
+        [_doneButton setImage:[UIImage imageNamed:@"checkmark"
+                                         inBundle:[OTAnnotationKitBundle annotationKitBundle]
+                    compatibleWithTraitCollection:nil]
+                     forState:UIControlStateNormal];
         [_doneButton setBackgroundColor:[UIColor colorWithRed:118.0/255.0f green:206.0/255.0f blue:31.0/255.0f alpha:1.0]];
         [_doneButton addTarget:self action:@selector(toolbarButtonPressed:) forControlEvents:UIControlEventTouchUpInside];
-        _doneButton.imageEdgeInsets = UIEdgeInsetsMake(8, 8, 8, 8);
     }
     return _doneButton;
 }
@@ -90,9 +105,11 @@
     
     if (self = [super initWithFrame:frame]) {
         _toolbar = [[LHToolbar alloc] initWithNumberOfItems:5];
-        _toolbar.frame = CGRectMake(0, 0, CGRectGetWidth(frame), CGRectGetHeight(frame));
+        _toolbar.translatesAutoresizingMaskIntoConstraints = NO;
         [self configureToolbarButtons];
         [self addSubview:_toolbar];
+        [_toolbar addAttachedLayoutConstantsToSuperview];
+        
         self.backgroundColor = [UIColor lightGrayColor];
         _annotationScrollView = annotationScrollView;
         
@@ -109,16 +126,6 @@
 - (void)dealloc {
     
     [[NSNotificationCenter defaultCenter] removeObserver:OTAnnotationTextViewDidCancelChangeNotification];
-}
-
-+ (instancetype)toolbar {
-    CGRect mainBounds = [UIScreen mainScreen].bounds;
-    return [[OTAnnotationToolbarView alloc] initWithFrame:CGRectMake(0, 0, CGRectGetWidth(mainBounds), DefaultToolbarHeight)];
-}
-
-- (void)setFrame:(CGRect)frame {
-    CGRect mainBounds = [UIScreen mainScreen].bounds;
-    super.frame = CGRectMake(frame.origin.x, frame.origin.y, CGRectGetWidth(mainBounds), DefaultToolbarHeight);
 }
 
 - (void)didMoveToSuperview {
@@ -145,7 +152,6 @@
     
     _screenshotButton = [[OTAnnotationToolbarButton alloc] init];
     [_screenshotButton setImage:[UIImage imageNamed:@"screenshot" inBundle:frameworkBundle compatibleWithTraitCollection:nil] forState:UIControlStateNormal];
-    _screenshotButton.translatesAutoresizingMaskIntoConstraints = NO;
     [_screenshotButton addTarget:self action:@selector(toolbarButtonPressed:) forControlEvents:UIControlEventTouchUpInside];
     
     _eraseButton = [[OTAnnotationToolbarButton alloc] init];

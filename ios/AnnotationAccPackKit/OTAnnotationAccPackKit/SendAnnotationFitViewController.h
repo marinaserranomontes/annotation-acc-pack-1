@@ -6,6 +6,6 @@
 
 #import <UIKit/UIKit.h>
 
-@interface SendAnnotationViewController : UIViewController
+@interface SendAnnotationFitViewController : UIViewController
 
 @end

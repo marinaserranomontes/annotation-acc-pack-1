@@ -16,6 +16,7 @@
 #import "OTAnnotationToolbarView_Private.h"
 
 #import "UIViewController+Helper.h"
+#import "UIView+Helper.h"
 #import "AnnLoggingWrapper.h"
 
 #import "Constants.h"
@@ -47,41 +48,12 @@
     
     if (self = [super init]) {
         
-        self.translatesAutoresizingMaskIntoConstraints = NO;
-        
         // scroll view
         _scrollView = [[UIScrollView alloc] init];
         _scrollView.translatesAutoresizingMaskIntoConstraints = NO;
         _scrollView.delegate = self;
         [self addSubview:_scrollView];
-        [NSLayoutConstraint constraintWithItem:_scrollView
-                                     attribute:NSLayoutAttributeTop
-                                     relatedBy:NSLayoutRelationEqual
-                                        toItem:self
-                                     attribute:NSLayoutAttributeTop
-                                    multiplier:1.0
-                                      constant:0.0].active = YES;
-        [NSLayoutConstraint constraintWithItem:_scrollView
-                                     attribute:NSLayoutAttributeLeft
-                                     relatedBy:NSLayoutRelationEqual
-                                        toItem:self
-                                     attribute:NSLayoutAttributeLeft
-                                    multiplier:1.0
-                                      constant:0.0].active = YES;
-        [NSLayoutConstraint constraintWithItem:_scrollView
-                                     attribute:NSLayoutAttributeBottom
-                                     relatedBy:NSLayoutRelationEqual
-                                        toItem:self
-                                     attribute:NSLayoutAttributeBottom
-                                    multiplier:1.0
-                                      constant:0.0].active = YES;
-        [NSLayoutConstraint constraintWithItem:_scrollView
-                                     attribute:NSLayoutAttributeRight
-                                     relatedBy:NSLayoutRelationEqual
-                                        toItem:self
-                                     attribute:NSLayoutAttributeRight
-                                    multiplier:1.0
-                                      constant:0.0].active = YES;
+        [_scrollView addAttachedLayoutConstantsToSuperview];
         
         // scroll content view
         _scrollContentView  = [[UIView alloc] init];
@@ -122,34 +94,7 @@
         _annotationView = [[OTAnnotationView alloc] init];
         _annotationView.translatesAutoresizingMaskIntoConstraints = NO;
         [_scrollContentView addSubview:_annotationView];
-        [NSLayoutConstraint constraintWithItem:_annotationView
-                                     attribute:NSLayoutAttributeTop
-                                     relatedBy:NSLayoutRelationEqual
-                                        toItem:_scrollContentView
-                                     attribute:NSLayoutAttributeTop
-                                    multiplier:1.0
-                                      constant:0.0].active = YES;
-        [NSLayoutConstraint constraintWithItem:_annotationView
-                                     attribute:NSLayoutAttributeLeft
-                                     relatedBy:NSLayoutRelationEqual
-                                        toItem:_scrollContentView
-                                     attribute:NSLayoutAttributeLeft
-                                    multiplier:1.0
-                                      constant:0.0].active = YES;
-        [NSLayoutConstraint constraintWithItem:_annotationView
-                                     attribute:NSLayoutAttributeBottom
-                                     relatedBy:NSLayoutRelationEqual
-                                        toItem:_scrollContentView
-                                     attribute:NSLayoutAttributeBottom
-                                    multiplier:1.0
-                                      constant:0.0].active = YES;
-        [NSLayoutConstraint constraintWithItem:_annotationView
-                                     attribute:NSLayoutAttributeRight
-                                     relatedBy:NSLayoutRelationEqual
-                                        toItem:_scrollContentView
-                                     attribute:NSLayoutAttributeRight
-                                    multiplier:1.0
-                                      constant:0.0].active = YES;
+        [_annotationView addAttachedLayoutConstantsToSuperview];
         
         self.annotatable = NO;
         

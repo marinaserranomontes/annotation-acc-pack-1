@@ -1,5 +1,5 @@
 //
-//  SendAnnotationViewController.swift
+//  ReceiveAnnotationViewController.swift
 //  OTAnnotationAccPackKit
 //
 //  Created by Xi Huang on 9/10/16.
@@ -8,7 +8,7 @@
 
 import Foundation
 
-class SendAnnotationViewController: UIViewController, AnnotationDelegate {
+class ReceiveAnnotationViewController: UIViewController, AnnotationDelegate {
     
     let annotator = OTAnnotator()
     let sharer = OTScreenSharer.sharedInstance()
@@ -17,28 +17,24 @@ class SendAnnotationViewController: UIViewController, AnnotationDelegate {
         super.viewDidLoad()
         
         navigationController?.navigationBar.translucent = false
-        sharer.connectWithView(nil) {
-            [unowned self]
+        
+        sharer.connectWithView(view) {
             (signal: ScreenShareSignal, error: NSError!) in
             
             if error == nil {
                 
                 if signal == .SessionDidConnect {
-                    self.sharer.publishAudio = false
                     self.sharer.publishVideo = false
+                    self.sharer.publishAudio = false
                 }
                 else if signal == .SubscriberConnect {
                     
-                    self.sharer.subscriberView.removeFromSuperview()
-                    self.sharer.subscriberView.frame = self.view.bounds
-                    self.view.insertSubview(self.sharer.subscriberView, atIndex: 0)
                 }
             }
         }
         
         annotator.delegate = self
-        annotator.connectForSendingAnnotation()
-        annotator.annotationView.currentAnnotatable = OTAnnotationPath.init(strokeColor: UIColor.yellowColor())
+        annotator.connectForReceivingAnnotation()
     }
     
     func annotationWithSignal(signal: OTAnnotationSignal, error: NSError!) {

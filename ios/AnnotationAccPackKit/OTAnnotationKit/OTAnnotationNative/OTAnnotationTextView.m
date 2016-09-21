@@ -128,7 +128,7 @@ NSString *const OTAnnotationTextViewDidCancelChangeNotification = @"OTAnnotation
     if (self = [super init]) {
         
         CGRect screenBounds = [UIScreen mainScreen].bounds;
-        self.frame = CGRectMake(LeadingPaddingOfAnnotationTextView, 180, CGRectGetWidth(screenBounds) - LeadingPaddingOfAnnotationTextView * 2, 0);
+        self.frame = CGRectMake(LeadingPaddingOfAnnotationTextView, 100, CGRectGetWidth(screenBounds) - LeadingPaddingOfAnnotationTextView * 2, 0);
         
         // attributes
         [self setClipsToBounds:NO];

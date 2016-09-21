@@ -24,7 +24,7 @@
                                             <rect key="frame" x="0.0" y="0.0" width="600" height="43.5"/>
                                             <autoresizingMask key="autoresizingMask"/>
                                             <subviews>
-                                                <label opaque="NO" multipleTouchEnabled="YES" contentMode="left" text="Annotation on blank canvas" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="6Qz-dN-s0S">
+                                                <label opaque="NO" multipleTouchEnabled="YES" contentMode="left" text="Annotation on blank canvas(Support Landscape)" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="6Qz-dN-s0S">
                                                     <rect key="frame" x="15" y="0.0" width="570" height="43.5"/>
                                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                                     <fontDescription key="fontDescription" type="system" pointSize="16"/>
@@ -104,7 +104,7 @@
                                             <rect key="frame" x="0.0" y="0.0" width="600" height="43.5"/>
                                             <autoresizingMask key="autoresizingMask"/>
                                             <subviews>
-                                                <label opaque="NO" multipleTouchEnabled="YES" contentMode="left" text="Send annotation" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="J4g-62-Lt4">
+                                                <label opaque="NO" multipleTouchEnabled="YES" contentMode="left" text="Send annotation(FIT mode)" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="J4g-62-Lt4">
                                                     <rect key="frame" x="15" y="0.0" width="570" height="43.5"/>
                                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                                     <fontDescription key="fontDescription" type="system" pointSize="16"/>
@@ -114,7 +114,7 @@
                                             </subviews>
                                         </tableViewCellContentView>
                                         <connections>
-                                            <segue destination="wav-WR-fza" kind="show" id="n0B-3u-GGC"/>
+                                            <segue destination="p5a-88-45d" kind="show" id="hSs-hH-Uui"/>
                                         </connections>
                                     </tableViewCell>
                                     <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" textLabel="BdC-5T-dW4" style="IBUITableViewCellStyleDefault" id="rkA-ec-Tf0">
@@ -124,7 +124,7 @@
                                             <rect key="frame" x="0.0" y="0.0" width="600" height="43.5"/>
                                             <autoresizingMask key="autoresizingMask"/>
                                             <subviews>
-                                                <label opaque="NO" multipleTouchEnabled="YES" contentMode="left" text="Receive annotation" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="BdC-5T-dW4">
+                                                <label opaque="NO" multipleTouchEnabled="YES" contentMode="left" text="Send annotation(FILL mode)" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="BdC-5T-dW4">
                                                     <rect key="frame" x="15" y="0.0" width="570" height="43.5"/>
                                                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                                     <fontDescription key="fontDescription" type="system" pointSize="16"/>
@@ -134,7 +134,27 @@
                                             </subviews>
                                         </tableViewCellContentView>
                                         <connections>
-                                            <segue destination="jNc-xy-E7H" kind="show" id="Y30-d6-WlD"/>
+                                            <segue destination="qAg-0e-h2P" kind="show" id="Qdl-fl-NQn"/>
+                                        </connections>
+                                    </tableViewCell>
+                                    <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" textLabel="3Lk-2c-cpI" style="IBUITableViewCellStyleDefault" id="I7h-jl-Jvq">
+                                        <rect key="frame" x="0.0" y="328" width="600" height="44"/>
+                                        <autoresizingMask key="autoresizingMask"/>
+                                        <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="I7h-jl-Jvq" id="cKN-7Y-B3L">
+                                            <rect key="frame" x="0.0" y="0.0" width="600" height="43.5"/>
+                                            <autoresizingMask key="autoresizingMask"/>
+                                            <subviews>
+                                                <label opaque="NO" multipleTouchEnabled="YES" contentMode="left" text="Receive annotation" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="3Lk-2c-cpI">
+                                                    <rect key="frame" x="15" y="0.0" width="570" height="43.5"/>
+                                                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                                    <fontDescription key="fontDescription" type="system" pointSize="16"/>
+                                                    <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                                                    <nil key="highlightedColor"/>
+                                                </label>
+                                            </subviews>
+                                        </tableViewCellContentView>
+                                        <connections>
+                                            <segue destination="jNc-xy-E7H" kind="show" id="OAe-gB-lzv"/>
                                         </connections>
                                     </tableViewCell>
                                 </cells>
@@ -203,10 +223,10 @@
             </objects>
             <point key="canvasLocation" x="275" y="-393"/>
         </scene>
-        <!--Send Annotation View Controller-->
+        <!--Send Annotation Fit View Controller-->
         <scene sceneID="fcD-4V-OxU">
             <objects>
-                <viewController id="Bqb-ki-As7" customClass="SendAnnotationViewController" sceneMemberID="viewController">
+                <viewController id="Bqb-ki-As7" customClass="SendAnnotationFitViewController" sceneMemberID="viewController">
                     <layoutGuides>
                         <viewControllerLayoutGuide type="top" id="plW-Vo-trv"/>
                         <viewControllerLayoutGuide type="bottom" id="Cr2-QR-32e"/>
@@ -351,10 +371,10 @@
             </objects>
             <point key="canvasLocation" x="275" y="1047"/>
         </scene>
-        <!--Send Annotation View Controller-->
+        <!--Send Annotation Fit View Controller-->
         <scene sceneID="cXA-Th-g8K">
             <objects>
-                <viewController id="p5a-88-45d" customClass="SendAnnotationViewController" sceneMemberID="viewController">
+                <viewController id="p5a-88-45d" customClass="SendAnnotationFitViewController" sceneMemberID="viewController">
                     <layoutGuides>
                         <viewControllerLayoutGuide type="top" id="r0N-uD-tzb"/>
                         <viewControllerLayoutGuide type="bottom" id="Ud7-Da-uNK"/>
@@ -362,17 +382,17 @@
                     <view key="view" contentMode="scaleToFill" id="i1v-ZP-ebb">
                         <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                        <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                        <color key="backgroundColor" red="0.27450980390000002" green="0.61176470589999998" blue="0.69803921570000005" alpha="1" colorSpace="calibratedRGB"/>
                     </view>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="Fva-Of-jVy" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="955" y="-393"/>
         </scene>
-        <!--Send Annotation View Controller-->
+        <!--Send Annotation Fit View Controller-->
         <scene sceneID="nW8-OF-YvP">
             <objects>
-                <viewController id="wav-WR-fza" customClass="SendAnnotationViewController" sceneMemberID="viewController">
+                <viewController id="wav-WR-fza" customClass="SendAnnotationFitViewController" sceneMemberID="viewController">
                     <layoutGuides>
                         <viewControllerLayoutGuide type="top" id="9E2-lr-qBw"/>
                         <viewControllerLayoutGuide type="bottom" id="vMf-WR-1es"/>
@@ -386,6 +406,24 @@
                 <placeholder placeholderIdentifier="IBFirstResponder" id="6cp-0U-JXd" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="955" y="-393"/>
+        </scene>
+        <!--Send Annotation Fill View Controller-->
+        <scene sceneID="CW0-iZ-Hgi">
+            <objects>
+                <viewController id="qAg-0e-h2P" customClass="SendAnnotationFillViewController" sceneMemberID="viewController">
+                    <layoutGuides>
+                        <viewControllerLayoutGuide type="top" id="Rjv-Hj-e80"/>
+                        <viewControllerLayoutGuide type="bottom" id="miV-1s-bSI"/>
+                    </layoutGuides>
+                    <view key="view" contentMode="scaleToFill" id="EBE-xH-bEE">
+                        <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <color key="backgroundColor" red="1" green="0.5" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                    </view>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="hzV-f9-fQL" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="944" y="1047"/>
         </scene>
     </scenes>
 </document>

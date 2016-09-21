@@ -18,80 +18,16 @@
     
     if (self = [super init]) {
         
-        OTAnnotationScrollView *annotationView = [[OTAnnotationScrollView alloc] init];
-        annotationView.scrollView.contentSize = CGSizeMake(CGRectGetWidth([UIScreen mainScreen].bounds),
-                                                            CGRectGetHeight([UIScreen mainScreen].bounds) - 50);
-        [annotationView initializeToolbarView];
-        CGFloat height = annotationView.toolbarView.bounds.size.height;
-        annotationView.toolbarView.translatesAutoresizingMaskIntoConstraints = NO;
-        annotationView.toolbarView.toolbarViewDataSource = self;
+        OTAnnotationScrollView *annotationScrollView = [[OTAnnotationScrollView alloc] init];
+        annotationScrollView.frame = CGRectMake(0, 0, CGRectGetWidth([UIScreen mainScreen].bounds), CGRectGetHeight([UIScreen mainScreen].bounds) - 50);
+        annotationScrollView.scrollView.contentSize = CGSizeMake(CGRectGetWidth([UIScreen mainScreen].bounds), CGRectGetHeight([UIScreen mainScreen].bounds) - 50);
         
-        [self.view addSubview:annotationView];
-        [self.view addSubview:annotationView.toolbarView];
+        [annotationScrollView initializeToolbarView];
+        annotationScrollView.toolbarView.frame = CGRectMake(0, CGRectGetHeight([UIScreen mainScreen].bounds) - 50, CGRectGetWidth([UIScreen mainScreen].bounds), 50);
+        annotationScrollView.toolbarView.toolbarViewDataSource = self;
         
-        [NSLayoutConstraint constraintWithItem:annotationView
-                                     attribute:NSLayoutAttributeTop
-                                     relatedBy:NSLayoutRelationEqual
-                                        toItem:self.topLayoutGuide
-                                     attribute:NSLayoutAttributeBottom
-                                    multiplier:1.0
-                                      constant:0.0].active = YES;
-        
-        [NSLayoutConstraint constraintWithItem:annotationView
-                                     attribute:NSLayoutAttributeLeading
-                                     relatedBy:NSLayoutRelationEqual
-                                        toItem:self.view
-                                     attribute:NSLayoutAttributeLeading
-                                    multiplier:1.0
-                                      constant:0.0].active = YES;
-        
-        [NSLayoutConstraint constraintWithItem:annotationView
-                                     attribute:NSLayoutAttributeTrailing
-                                     relatedBy:NSLayoutRelationEqual
-                                        toItem:self.view
-                                     attribute:NSLayoutAttributeTrailing
-                                    multiplier:1.0
-                                      constant:0.0].active = YES;
-        
-        [NSLayoutConstraint constraintWithItem:annotationView
-                                     attribute:NSLayoutAttributeBottom
-                                     relatedBy:NSLayoutRelationEqual
-                                        toItem:annotationView.toolbarView
-                                     attribute:NSLayoutAttributeTop
-                                    multiplier:1.0
-                                      constant:height].active = YES;
-        
-        [NSLayoutConstraint constraintWithItem:annotationView.toolbarView
-                                     attribute:NSLayoutAttributeBottom
-                                     relatedBy:NSLayoutRelationEqual
-                                        toItem:self.view
-                                     attribute:NSLayoutAttributeBottom
-                                    multiplier:1.0
-                                      constant:0.0].active = YES;
-        
-        [NSLayoutConstraint constraintWithItem:annotationView.toolbarView
-                                     attribute:NSLayoutAttributeLeading
-                                     relatedBy:NSLayoutRelationEqual
-                                        toItem:self.view
-                                     attribute:NSLayoutAttributeLeading
-                                    multiplier:1.0
-                                      constant:0.0].active = YES;
-        
-        [NSLayoutConstraint constraintWithItem:annotationView.toolbarView
-                                     attribute:NSLayoutAttributeTrailing
-                                     relatedBy:NSLayoutRelationEqual
-                                        toItem:self.view
-                                     attribute:NSLayoutAttributeTrailing
-                                    multiplier:1.0
-                                      constant:0.0].active = YES;
-        
-        [NSLayoutConstraint constraintWithItem:annotationView.toolbarView
-                                     attribute:NSLayoutAttributeHeight
-                                     relatedBy:NSLayoutRelationEqual
-                                        toItem:nil
-                                     attribute:NSLayoutAttributeNotAnAttribute
-                                    multiplier:1.0
-                                      constant:height].active = YES;
+        [self.view addSubview:annotationScrollView];
+        [self.view addSubview:annotationScrollView.toolbarView];
         
         self.providesPresentationContextTransitionStyle = YES;
         self.definesPresentationContext = YES;
