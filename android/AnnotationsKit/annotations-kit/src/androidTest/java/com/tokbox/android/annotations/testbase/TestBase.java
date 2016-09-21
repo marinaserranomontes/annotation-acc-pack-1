@@ -72,10 +72,6 @@ public class TestBase extends AndroidTestCase {
         super.setUp();
 
         this.context = getContext();
-
-        if (context == null ){
-            Log.i("MARIANS", "CONTEXT IS NULL");
-        }
     }
 
     protected void setUp(int key, String secret) throws Exception {
