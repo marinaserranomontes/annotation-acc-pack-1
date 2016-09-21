@@ -103,7 +103,6 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
     private String canvasId;
     private boolean clear = false;
 
-    private ViewType mType;
     private Context mContext;
 
     private ViewGroup mContentView;
@@ -152,36 +151,11 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
         }
     }
 
-    /**
-     * View type: annotations for the subscriber view or for the publisher view
-     *
-     **/
-    public enum ViewType {
-        SubscriberView,
-        PublisherView
-    }
-
     /*
-     * Constructor
-     * @param context Application context
-     * @param session The OpenTok Accelerator Pack session instance.
-     * @param partnerId  The partner id - apiKey.
-     **/
-    public AnnotationsView(Context context, AccPackSession session, String partnerId, boolean isScreensharing, ViewType type) {
-        super(context);
-        this.mContext = context;
-        this.mSession = session;
-        this.mPartnerId = partnerId;
-        this.mSession.setSignalListener(this);
-        this.isScreensharing = isScreensharing;
-        init();
-    }
-
-    /*
-     * Constructor
-     * @param context Application context
-     * @param attrs A collection of attributes
-     */
+    * Constructor
+    * @param context Application context
+    * @param attrs A collection of attributes
+    */
     public AnnotationsView(Context context, AttributeSet attrs) {
         super(context, attrs);
         init();
@@ -193,8 +167,39 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
      * @param session The OpenTok Accelerator Pack session instance.
      * @param partnerId  The partner id - apiKey.
      **/
-    public AnnotationsView(Context context, AccPackSession session, String partnerId, boolean isScreensharing, ViewType type, String remoteConnectionId) {
+    public AnnotationsView(Context context, AccPackSession session, String partnerId, boolean isScreensharing) throws Exception {
         super(context);
+
+        if ( session == null ) {
+            throw new Exception("Session cannot be null in the annotations");
+        }
+        if ( session.getConnection() == null ){
+            throw new Exception("Session is not connected");
+        }
+        this.mContext = context;
+        this.mSession = session;
+        this.mPartnerId = partnerId;
+        this.mSession.setSignalListener(this);
+        this.isScreensharing = isScreensharing;
+        init();
+
+    }
+
+    /*
+     * Constructor
+     * @param context Application context
+     * @param session The OpenTok Accelerator Pack session instance.
+     * @param partnerId  The partner id - apiKey.
+     **/
+    public AnnotationsView(Context context, AccPackSession session, String partnerId, boolean isScreensharing, String remoteConnectionId) throws Exception {
+        super(context);
+
+        if ( mSession == null ) {
+            throw new Exception("Session cannot be null in the annotations");
+        }
+        if ( session.getConnection() == null ){
+            throw new Exception("Session is not connected");
+        }
         this.mContext = context;
         this.mSession = session;
         this.mPartnerId = partnerId;
@@ -208,24 +213,36 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
      * Attach the Annotations Toolbar to the view
      * @param toolbar AnnotationsToolbar
      */
-    public void attachToolbar(AnnotationsToolbar toolbar) {
+    public void attachToolbar(AnnotationsToolbar toolbar) throws Exception {
+
+        if ( toolbar == null ) {
+            throw new Exception("AnnotationsToolbar cannot be null");
+        }
         mToolbar = toolbar;
-        if (toolbar != null) {
-            mToolbar.setActionListener(this);
-        }
-        else {
-            Log.i(LOG_TAG, "Annotations Toolbar is null");
-        }
+        mToolbar.setActionListener(this);
+
         addLogEvent(OpenTokConfig.LOG_ACTION_USE_TOOLBAR, OpenTokConfig.LOG_VARIATION_SUCCESS);
+    }
+
+    public AnnotationsToolbar getToolbar() {
+        return mToolbar;
     }
 
     /*
      * Set an AnnotationsVideoRenderer
      * @param videoRenderer AnnotationsVideoRenderer
      **/
-    public void setVideoRenderer(AnnotationsVideoRenderer videoRenderer) {
+    public void setVideoRenderer(AnnotationsVideoRenderer videoRenderer) throws Exception {
+        if ( videoRenderer == null ) {
+            throw new Exception("VideoRenderer cannot be null");
+        }
         this.videoRenderer = videoRenderer;
     }
+
+    public AnnotationsVideoRenderer getVideoRenderer() {
+        return videoRenderer;
+    }
+
 
     /*
      * Set AnnotationsListener
@@ -423,6 +440,7 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
     public boolean onTouchEvent(MotionEvent event) {
         final float x = event.getX();
         final float y = event.getY();
+
         if (  mode != null ) {
             mCurrentColor = mSelectedColor;
             if (mode == Mode.Pen) {
@@ -448,7 +466,12 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
                     case MotionEvent.ACTION_UP: {
                         upTouch();
                         sendAnnotation(mode.toString(), buildSignalFromPoint(x,y, false, true));
-                        addAnnotatable(mSession.getConnection().getConnectionId());
+                        try {
+                            addAnnotatable(mSession.getConnection().getConnectionId());
+
+                        }catch (Exception e){
+                            Log.e(LOG_TAG, e.toString());
+                        }
                         mAnnotationsActive = false;
                         invalidate();
                         addLogEvent(OpenTokConfig.LOG_ACTION_END_DRAWING, OpenTokConfig.LOG_VARIATION_SUCCESS);
@@ -527,7 +550,13 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
 
                                 //Create annotatable text and add it to the canvas
                                 mAnnotationsActive = false;
-                                addAnnotatable(mSession.getConnection().getConnectionId());
+
+                                try {
+                                    addAnnotatable(mSession.getConnection().getConnectionId());
+
+                                }catch (Exception e){
+                                    Log.e(LOG_TAG, e.toString());
+                                }
 
                                 mCurrentText = null;
                                 invalidate();
@@ -708,14 +737,14 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
         }
     }
 
-    private void addAnnotatable(String cid) {
+    private void addAnnotatable(String cid) throws Exception {
         Log.i(LOG_TAG, "Add Annotatable");
         if (mode != null) {
             if (mode.equals(Mode.Pen)) {
-                mCurrentAnnotatable = new Annotatable(mode.toString(), mCurrentPath, mCurrentPaint, width, height, cid);
+                mCurrentAnnotatable = new Annotatable(mode, mCurrentPath, mCurrentPaint, width, height, cid);
                 mCurrentAnnotatable.setType(Annotatable.AnnotatableType.PATH);
             } else {
-                mCurrentAnnotatable = new Annotatable(mode.toString(), mCurrentText, mCurrentPaint, width, height, cid);
+                mCurrentAnnotatable = new Annotatable(mode, mCurrentText, mCurrentPaint, width, height, cid);
                 mCurrentAnnotatable.setType(Annotatable.AnnotatableType.TEXT);
             }
             mAnnotationsManager.addAnnotatable(mCurrentAnnotatable);
@@ -914,7 +943,11 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
                         } else {
                             if (type.equalsIgnoreCase(Mode.Text.toString())) {
                                 Log.i(LOG_TAG, "New text annotations is received");
-                                textAnnotation(connection, data);
+                                try {
+                                    textAnnotation(connection, data);
+                                }catch (Exception e) {
+                                    Log.e(LOG_TAG, e.toString());
+                                }
                             }
                         }
                     }
@@ -1060,7 +1093,11 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
                             mCurrentPath.addPoint(new PointF(toX, toY));
 
                             if (endPoint) {
-                                addAnnotatable(connection.getConnectionId());
+                                try {
+                                    addAnnotatable(connection.getConnectionId());
+                                }catch(Exception e) {
+                                    Log.e(LOG_TAG, e.toString());
+                                }
                                 mAnnotationsActive = false;
                             }
                         }
@@ -1074,7 +1111,11 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
                             beginTouch(fromX, fromY);
                             moveTouch(toX, toY, false);
                             upTouch();
-                            addAnnotatable(connection.getConnectionId());
+                            try {
+                                addAnnotatable(connection.getConnectionId());
+                            }catch(Exception e) {
+                                Log.e(LOG_TAG, e.toString());
+                            }
                         } else if (isStartPoint) {
                             mAnnotationsActive = true;
                             createPathAnnotatable(false);
@@ -1083,7 +1124,11 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
                         } else if (endPoint) {
                             moveTouch(toX, toY, false);
                             upTouch();
-                            addAnnotatable(connection.getConnectionId());
+                            try {
+                                addAnnotatable(connection.getConnectionId());
+                            }catch(Exception e) {
+                                Log.e(LOG_TAG, e.toString());
+                            }
                             mAnnotationsActive = false;
                         } else {
                             moveTouch(toX, toY, false);
@@ -1100,7 +1145,7 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
 
     }
 
-    private void textAnnotation(Connection connection, String data) {
+    private void textAnnotation(Connection connection, String data) throws Exception{
 
         mode = Mode.Text;
         // Build object from JSON array

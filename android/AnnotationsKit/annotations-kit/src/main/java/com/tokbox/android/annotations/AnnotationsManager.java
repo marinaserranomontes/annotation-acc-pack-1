@@ -26,7 +26,10 @@ public class AnnotationsManager {
         mAnnotatableList = new ArrayList<Annotatable>();
     }
 
-    public void addAnnotatable(Annotatable annotatable){
+    public void addAnnotatable(Annotatable annotatable) throws Exception{
+        if ( annotatable == null ) {
+            throw new Exception("Annotatable cannot be null.");
+        }
         mAnnotatableList.add(annotatable);
         if ( annotatable.getPath() != null){
             annotatable.setType (Annotatable.AnnotatableType.PATH);

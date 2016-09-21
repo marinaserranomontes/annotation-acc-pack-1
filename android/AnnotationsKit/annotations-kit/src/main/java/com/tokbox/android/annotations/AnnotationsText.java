@@ -27,7 +27,7 @@ public class AnnotationsText implements View.OnClickListener{
     //String text;
     float x, y;
 
-    AnnotationsText(EditText editText, float x, float y) {
+    public AnnotationsText(EditText editText, float x, float y) {
         this.id = UUID.randomUUID();
         this.editText = editText;
         this.x = x;

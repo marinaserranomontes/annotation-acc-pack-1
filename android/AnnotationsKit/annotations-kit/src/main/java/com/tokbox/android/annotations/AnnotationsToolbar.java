@@ -62,8 +62,12 @@ public class AnnotationsToolbar extends LinearLayout {
      * Constructor
      * @param context Application context
      **/
-    public AnnotationsToolbar(Context context) {
+    public AnnotationsToolbar(Context context) throws Exception {
         super(context);
+
+        if ( context == null ){
+            throw new Exception("Context cannot be null");
+        }
         mContext = context;
 
         WindowManager wm = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
@@ -77,8 +81,13 @@ public class AnnotationsToolbar extends LinearLayout {
      * @param context Application context
      * @param attrs A collection of attributes
      **/
-    public AnnotationsToolbar(Context context, AttributeSet attrs) {
+    public AnnotationsToolbar(Context context, AttributeSet attrs) throws Exception {
         super(context, attrs);
+
+        if ( context == null ){
+            throw new Exception("Context cannot be null");
+        }
+
         mContext = context;
 
         WindowManager wm = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
