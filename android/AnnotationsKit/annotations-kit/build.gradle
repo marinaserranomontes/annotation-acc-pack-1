@@ -15,16 +15,6 @@ android {
         testApplicationId "com.tokbox.android.annotations.test"
     }
 
-
-    sourceSets {
-
-        androidTest {
-            java {
-                srcDir 'src/androidTest/java'
-            }
-        }
-    }
-
     buildTypes {
         release {
             minifyEnabled false
