@@ -32,7 +32,9 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.opentok.android.Connection;
+import com.opentok.android.Publisher;
 import com.opentok.android.Session;
+import com.opentok.android.Subscriber;
 import com.tokbox.android.accpack.AccPackSession;
 import com.tokbox.android.annotations.config.OpenTokConfig;
 import com.tokbox.android.logging.OTKAnalytics;
@@ -88,7 +90,9 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
     private boolean defaultLayout = false;
 
     private AccPackSession mSession;
-    private String mRemoteConnectionId;
+    private Subscriber mRemote;
+    private Publisher mLocal;
+
     private String mPartnerId;
 
     private OTKAnalyticsData mAnalyticsData;
@@ -119,6 +123,18 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
          * @param bmp Bitmap of the screencapture.
          */
         void onScreencaptureReady(Bitmap bmp);
+
+        /**
+         * Invoked when an annotations item in the toolbar is selected
+         *
+         */
+        void onAnnotationsSelected(AnnotationsView.Mode mode);
+
+        /**
+         * Invoked when the DONE button annotations item in the toolbar is selected
+         *
+         */
+        void onAnnotationsDone();
 
         /**
          * Invoked when an error happens
@@ -162,7 +178,7 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
     }
 
     /*
-     * Constructor
+     * Constructor publisher annotations
      * @param context Application context
      * @param session The OpenTok Accelerator Pack session instance.
      * @param partnerId  The partner id - apiKey.
@@ -186,12 +202,38 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
     }
 
     /*
-     * Constructor
+    * Constructor publisher annotations
+    * @param context Application context
+    * @param session The OpenTok Accelerator Pack session instance.
+    * @param partnerId  The partner id - apiKey.
+    **/
+    public AnnotationsView(Context context, AccPackSession session, String partnerId, boolean isScreensharing, Publisher local) throws Exception {
+        super(context);
+
+        if ( session == null ) {
+            throw new Exception("Session cannot be null in the annotations");
+        }
+        if ( session.getConnection() == null ){
+            throw new Exception("Session is not connected");
+        }
+        this.mContext = context;
+        this.mSession = session;
+        this.mPartnerId = partnerId;
+        this.mSession.setSignalListener(this);
+        this.isScreensharing = isScreensharing;
+        this.mLocal = local;
+        init();
+
+    }
+
+
+    /*
+     * Constructor subscriber annotations
      * @param context Application context
      * @param session The OpenTok Accelerator Pack session instance.
      * @param partnerId  The partner id - apiKey.
      **/
-    public AnnotationsView(Context context, AccPackSession session, String partnerId, boolean isScreensharing, String remoteConnectionId) throws Exception {
+    public AnnotationsView(Context context, AccPackSession session, String partnerId, Subscriber remote) throws Exception {
         super(context);
 
         if ( mSession == null ) {
@@ -204,8 +246,8 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
         this.mSession = session;
         this.mPartnerId = partnerId;
         this.mSession.setSignalListener(this);
-        this.isScreensharing = isScreensharing;
-        this.mRemoteConnectionId = remoteConnectionId;
+        this.isScreensharing = false;
+        this.mRemote = remote;
         init();
     }
 
@@ -758,7 +800,7 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
             mode = Mode.Done;
             clearAll(false, mSession.getConnection().getConnectionId());
             this.setVisibility(GONE);
-
+            mListener.onAnnotationsDone();
             addLogEvent(OpenTokConfig.LOG_ACTION_DONE, OpenTokConfig.LOG_VARIATION_SUCCESS);
         }
         if (v.getId() == R.id.erase) {
@@ -809,6 +851,11 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
             resize();
             loaded = true;
         }
+
+        if ( mode != null ) {
+            mListener.onAnnotationsSelected(mode);
+        }
+
     }
 
     private Bitmap getScreenshot(){
@@ -850,7 +897,15 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
         }
 
         try {
-            jsonObject.put("id", this.canvasId);
+            if ( mRemote != null && mRemote.getStream() != null ){
+                jsonObject.put("id", mRemote.getStream().getConnection().getConnectionId());
+            }
+            else {
+
+                if ( mLocal != null && mLocal.getStream() != null ) {
+                    jsonObject.put("id", mLocal.getStream().getConnection().getConnectionId());
+                }
+            }
             jsonObject.put("fromId", mSession.getConnection().getConnectionId());
             jsonObject.put("fromX", x);
             jsonObject.put("fromY", y);
@@ -888,7 +943,15 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
             videoHeight = videoRenderer.getVideoHeight();
         }
         try {
-            jsonObject.put("id", mRemoteConnectionId);
+            if ( mRemote != null && mRemote.getStream() != null ){
+                jsonObject.put("id", mRemote.getStream().getConnection().getConnectionId());
+            }
+            else {
+
+                if ( mLocal != null && mLocal.getStream() != null ) {
+                    jsonObject.put("id", mLocal.getStream().getConnection().getConnectionId());
+                }
+            }
             jsonObject.put("fromId", mSession.getConnection().getConnectionId());
             jsonObject.put("fromX", mCurrentPath.getEndPoint().x);
             jsonObject.put("fromY", mCurrentPath.getEndPoint().y);
