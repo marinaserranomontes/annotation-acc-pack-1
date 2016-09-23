@@ -198,7 +198,6 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
         this.mSession.setSignalListener(this);
         this.isScreensharing = isScreensharing;
         init();
-
     }
 
     /*
@@ -223,9 +222,7 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
         this.isScreensharing = isScreensharing;
         this.mLocal = local;
         init();
-
     }
-
 
     /*
      * Constructor subscriber annotations
@@ -235,8 +232,7 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
      **/
     public AnnotationsView(Context context, AccPackSession session, String partnerId, Subscriber remote) throws Exception {
         super(context);
-
-        if ( mSession == null ) {
+        if ( session == null ) {
             throw new Exception("Session cannot be null in the annotations");
         }
         if ( session.getConnection() == null ){
@@ -381,7 +377,23 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
         return screenHeight;
 
     }
+    private int getDisplayWidth(){
+        final WindowManager windowManager = (WindowManager) getContext()
+                .getSystemService(Context.WINDOW_SERVICE);
 
+        final Point size = new Point();
+        int screenWidth = 0;
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+            windowManager.getDefaultDisplay().getSize(size);
+            screenWidth = size.x;
+        } else {
+            Display d = windowManager.getDefaultDisplay();
+            screenWidth = d.getWidth();
+        }
+
+        return screenWidth;
+    }
     private int getStatusBarHeight() {
         int result = 0;
         int resourceId = getResources().getIdentifier("status_bar_height", "dimen", "android");
@@ -422,7 +434,6 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
             Display d = windowManager.getDefaultDisplay();
             screenHeight = d.getHeight();
         }
-
 
         //return screenHeight;
         return (screenHeight - contentTop - actionBarHeight);
@@ -958,7 +969,7 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
             jsonObject.put("toX", x);
             jsonObject.put("toY", y);
             jsonObject.put("color", String.format("#%06X", (0xFFFFFF & mCurrentColor)));
-            jsonObject.put("lineWidth", 10);
+            jsonObject.put("lineWidth", 2);
             jsonObject.put("videoWidth", videoWidth);
             jsonObject.put("videoHeight", videoHeight);
             jsonObject.put("canvasWidth", this.width);
@@ -979,10 +990,12 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
 
     @Override
     public void onSignalReceived(Session session, String type, String data, Connection connection) {
+
         String mycid = session.getConnection().getConnectionId();
         String cid = connection.getConnectionId();
 
         if (!cid.equals(mycid)) { // Ensure that we only handle signals from other users on the current canvas
+
             if (type.contains(SIGNAL_TYPE)) {
                 this.setVisibility(VISIBLE);
                 if (!loaded){
@@ -1020,7 +1033,7 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
     }
 
 
-    private void penAnnotations(Connection connection, String data){
+    private void penAnnotations(Connection connection, String data) {
         mode = Mode.Pen;
 
         // Build object from JSON array
@@ -1073,139 +1086,138 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
                     mCurrentColor = Color.parseColor(((String) json.get("color")).toLowerCase());
                 }
 
-
+                float scale = 1;
+                float localWidth = 0;
+                float localHeight = 0;
                 if (videoRenderer != null) {
-                    // Handle scale
-                    float scale = 1;
+                    localWidth = (float) videoRenderer.getVideoWidth();
+                    localHeight = (float) videoRenderer.getVideoHeight();
+                }
 
-                    float localWidth = (float) videoRenderer.getVideoWidth();
-                    float localHeight = (float) videoRenderer.getVideoHeight();
+                if (localWidth == 0) {
+                    localWidth = getDisplayWidth();
+                }
+                if (localHeight == 0) {
+                    localHeight = getDisplayHeight();
+                }
 
-                    if ( localWidth == 0 ){
-                        localWidth = videoRenderer.getDefaultWidth();
-                    }
-                    if ( localHeight == 0 ){
-                        localHeight = videoRenderer.getDefaultHeight();
-                    }
+                Map<String, Float> canvas = new HashMap<>();
+                canvas.put("width", localWidth);
+                canvas.put("height", localHeight);
 
-                    Map<String, Float> canvas = new HashMap<>();
-                    canvas.put("width", localWidth);
-                    canvas.put("height", localHeight);
+                Map<String, Float> iCanvas = new HashMap<>();
+                iCanvas.put("width", ((Number) json.get("canvasWidth")).floatValue());
+                iCanvas.put("height", ((Number) json.get("canvasHeight")).floatValue());
 
-                    Map<String, Float> iCanvas = new HashMap<>();
-                    iCanvas.put("width", ((Number) json.get("canvasWidth")).floatValue());
-                    iCanvas.put("height", ((Number) json.get("canvasHeight")).floatValue());
 
-                    float canvasRatio = canvas.get("width") / canvas.get("height");
+                float canvasRatio = canvas.get("width") / canvas.get("height");
 
-                    if (canvasRatio < 0) {
-                        scale = canvas.get("width") / iCanvas.get("width");
+                if (canvasRatio < 0) {
+                    scale = canvas.get("width") / iCanvas.get("width");
+                } else {
+                    scale = canvas.get("height") / iCanvas.get("height");
+                }
+
+                float centerX = canvas.get("width") / 2f;
+                float centerY = canvas.get("height") / 2f;
+
+                float iCenterX = iCanvas.get("width") / 2f;
+                float iCenterY = iCanvas.get("height") / 2f;
+
+
+                float fromX = centerX - (scale * (iCenterX - ((Number) json.get("fromX")).floatValue()));
+                float toX = centerX - (scale * (iCenterX - ((Number) json.get("toX")).floatValue()));
+
+                float fromY = centerY - (scale * (iCenterY - ((Number) json.get("fromY")).floatValue()));
+                float toY = centerY - (scale * (iCenterY - ((Number) json.get("toY")).floatValue()));
+
+                fromY = fromY - getActionBarHeight();
+                toY = toY - getActionBarHeight();
+
+                if (mSignalMirrored) {
+                    Log.i(LOG_TAG, "Signal is mirrored");
+                    fromX = this.width - fromX;
+                    toX = this.width - toX;
+                }
+                mMirrored = videoRenderer.isMirrored();
+                if (mMirrored) {
+                    Log.i("CanvasOffset", "Feed is mirrored");
+                    // Revert (Double negative)
+                    fromX = this.width - fromX;
+                    toX = this.width - toX;
+                }
+
+                boolean smoothed = false;
+
+                if (!json.isNull("smoothed")) {
+                    if (json.get("smoothed") instanceof Number) {
+                        Number value = (Number) json.get("smoothed");
+                        smoothed = value.intValue() == 1;
                     } else {
-                        scale = canvas.get("height") / iCanvas.get("height");
+                        smoothed = (boolean) json.get("smoothed");
                     }
+                }
+                if (smoothed) {
+                    if (isStartPoint) {
+                        mAnnotationsActive = true;
+                        createPathAnnotatable(false);
+                        mCurrentPath.addPoint(new PointF(toX, toY));
+                    } else if (secondPoint) {
+                        beginTouch((toX + mCurrentPath.getEndPoint().x) / 2, (toY + mCurrentPath.getEndPoint().y) / 2);
+                        mCurrentPath.addPoint(new PointF(toX, toY));
+                    } else {
+                        moveTouch(toX, toY, true);
+                        mCurrentPath.addPoint(new PointF(toX, toY));
 
-                    float centerX = canvas.get("width") / 2f;
-                    float centerY = canvas.get("height") / 2f;
-
-                    float iCenterX = iCanvas.get("width") / 2f;
-                    float iCenterY = iCanvas.get("height") / 2f;
-
-
-                    float fromX = centerX - (scale * (iCenterX - ((Number) json.get("fromX")).floatValue()));
-                    float toX = centerX - (scale * (iCenterX - ((Number) json.get("toX")).floatValue()));
-
-                    float fromY = centerY - (scale * (iCenterY - ((Number) json.get("fromY")).floatValue()));
-                    float toY = centerY - (scale * (iCenterY - ((Number) json.get("toY")).floatValue()));
-
-                    fromY = fromY - getActionBarHeight();
-                    toY = toY - getActionBarHeight();
-
-                    if (mSignalMirrored) {
-                        Log.i(LOG_TAG, "Signal is mirrored");
-                        fromX = this.width - fromX;
-                        toX = this.width - toX;
-                    }
-                    mMirrored = videoRenderer.isMirrored();
-                    if (mMirrored) {
-                        Log.i("CanvasOffset", "Feed is mirrored");
-                        // Revert (Double negative)
-                        fromX = this.width - fromX;
-                        toX = this.width - toX;
-                    }
-
-                    boolean smoothed = false;
-
-                    if (!json.isNull("smoothed")) {
-                        if (json.get("smoothed") instanceof Number) {
-                            Number value = (Number) json.get("smoothed");
-                            smoothed = value.intValue() == 1;
-                        } else {
-                            smoothed = (boolean) json.get("smoothed");
-                        }
-                    }
-                    if (smoothed) {
-                        if (isStartPoint) {
-                            mAnnotationsActive = true;
-                            createPathAnnotatable(false);
-                            mCurrentPath.addPoint(new PointF(toX, toY));
-                        } else if (secondPoint) {
-                            beginTouch((toX + mCurrentPath.getEndPoint().x) / 2, (toY + mCurrentPath.getEndPoint().y) / 2);
-                            mCurrentPath.addPoint(new PointF(toX, toY));
-                        } else {
-                            moveTouch(toX, toY, true);
-                            mCurrentPath.addPoint(new PointF(toX, toY));
-
-                            if (endPoint) {
-                                try {
-                                    addAnnotatable(connection.getConnectionId());
-                                }catch(Exception e) {
-                                    Log.e(LOG_TAG, e.toString());
-                                }
-                                mAnnotationsActive = false;
-                            }
-                        }
-                    }
-                    else {
-                        if (isStartPoint && endPoint) {
-                            mAnnotationsActive = true;
-                            createPathAnnotatable(false);
-                            mCurrentPath.addPoint(new PointF(fromX, fromY));
-                            // We have a straight line
-                            beginTouch(fromX, fromY);
-                            moveTouch(toX, toY, false);
-                            upTouch();
+                        if (endPoint) {
                             try {
                                 addAnnotatable(connection.getConnectionId());
-                            }catch(Exception e) {
-                                Log.e(LOG_TAG, e.toString());
-                            }
-                        } else if (isStartPoint) {
-                            mAnnotationsActive = true;
-                            createPathAnnotatable(false);
-                            mCurrentPath.addPoint(new PointF(fromX, fromY));
-                            beginTouch(toX, toY);
-                        } else if (endPoint) {
-                            moveTouch(toX, toY, false);
-                            upTouch();
-                            try {
-                                addAnnotatable(connection.getConnectionId());
-                            }catch(Exception e) {
+                            } catch (Exception e) {
                                 Log.e(LOG_TAG, e.toString());
                             }
                             mAnnotationsActive = false;
-                        } else {
-                            moveTouch(toX, toY, false);
-                            mCurrentPath.addPoint(new PointF(toX, toY));
                         }
                     }
-
-                    invalidate(); // Need this to finalize the drawing on the screen
+                } else {
+                    if (isStartPoint && endPoint) {
+                        mAnnotationsActive = true;
+                        createPathAnnotatable(false);
+                        mCurrentPath.addPoint(new PointF(fromX, fromY));
+                        // We have a straight line
+                        beginTouch(fromX, fromY);
+                        moveTouch(toX, toY, false);
+                        upTouch();
+                        try {
+                            addAnnotatable(connection.getConnectionId());
+                        } catch (Exception e) {
+                            Log.e(LOG_TAG, e.toString());
+                        }
+                    } else if (isStartPoint) {
+                        mAnnotationsActive = true;
+                        createPathAnnotatable(false);
+                        mCurrentPath.addPoint(new PointF(fromX, fromY));
+                        beginTouch(toX, toY);
+                    } else if (endPoint) {
+                        moveTouch(toX, toY, false);
+                        upTouch();
+                        try {
+                            addAnnotatable(connection.getConnectionId());
+                        } catch (Exception e) {
+                            Log.e(LOG_TAG, e.toString());
+                        }
+                        mAnnotationsActive = false;
+                    } else {
+                        moveTouch(toX, toY, false);
+                        mCurrentPath.addPoint(new PointF(toX, toY));
+                    }
                 }
+
+                invalidate(); // Need this to finalize the drawing on the screen
             }
+
         } catch (JSONException e) {
             e.printStackTrace();
         }
-
     }
 
     private void textAnnotation(Connection connection, String data) throws Exception{
@@ -1258,77 +1270,87 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
                     }
                 }
 
+                float scale = 1;
+                float localWidth = 0;
+                float localHeight = 0;
                 if (videoRenderer != null) {
-                    // Handle scale
-                    float scale = 1;
-
-                    Map<String, Float> canvas = new HashMap<>();
-                    canvas.put("width", (float) videoRenderer.getVideoWidth());
-                    canvas.put("height", (float) videoRenderer.getVideoHeight());
-
-                    Map<String, Float> iCanvas = new HashMap<>();
-                    iCanvas.put("width", ((Number) json.get("canvasWidth")).floatValue());
-                    iCanvas.put("height", ((Number) json.get("canvasHeight")).floatValue());
-
-                    float canvasRatio = canvas.get("width") / canvas.get("height");
-
-                    if (canvasRatio < 0) {
-                        scale = canvas.get("width") / iCanvas.get("width");
-                    } else {
-                        scale = canvas.get("height") / iCanvas.get("height");
-                    }
-
-                    Log.i(LOG_TAG, "Scale: " + scale);
-
-                    float centerX = canvas.get("width") / 2f;
-                    float centerY = canvas.get("height") / 2f;
-
-                    float iCenterX = iCanvas.get("width") / 2f;
-                    float iCenterY = iCanvas.get("height") / 2f;
-
-
-                    float textX = centerX - (scale * (iCenterX - ((Number) json.get("fromX")).floatValue()));
-                    float textY = centerY - (scale * (iCenterY - ((Number) json.get("fromY")).floatValue()));
-
-                    textY = textY - getActionBarHeight();
-
-                    if (start) {
-                        EditText editText = new EditText(getContext());
-                        editText.setVisibility(VISIBLE);
-                        editText.setImeOptions(EditorInfo.IME_ACTION_DONE);
-
-                        // Add whatever you want as size
-                        int editTextHeight = 70;
-                        int editTextWidth = 200;
-
-                        RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(editTextWidth, editTextHeight);
-
-                        //You could adjust the position
-                        params.topMargin = (int) (textX);
-                        params.leftMargin = (int) (textY);
-                        this.addView(editText, params);
-                        editText.setVisibility(VISIBLE);
-                        editText.setSingleLine();
-                        editText.setImeOptions(EditorInfo.IME_ACTION_DONE);
-                        editText.requestFocus();
-                        editText.setText(text);
-                        editText.setTextSize(mTextSize);
-
-                        createTextAnnotatable(editText, textX, textY);
-
-                        mAnnotationsActive = true;
-
-                    }
-                    if (end) {
-                        mAnnotationsActive = false;
-                        addAnnotatable(connection.getConnectionId());
-                        mCurrentText = null;
-                    } else {
-                        mCurrentText.getEditText().setText(text.toString());
-                    }
-                    invalidate(); // Need this to finalize the drawing on the screen
+                    localWidth = (float) videoRenderer.getVideoWidth();
+                    localHeight = (float) videoRenderer.getVideoHeight();
                 }
+
+                if (localWidth == 0) {
+                    localWidth = getDisplayWidth();
+                }
+                if (localHeight == 0) {
+                    localHeight = getDisplayHeight();
+                }
+
+                Map<String, Float> canvas = new HashMap<>();
+                canvas.put("width", localWidth);
+                canvas.put("height", localHeight);
+
+                Map<String, Float> iCanvas = new HashMap<>();
+                iCanvas.put("width", ((Number) json.get("canvasWidth")).floatValue());
+                iCanvas.put("height", ((Number) json.get("canvasHeight")).floatValue());
+                float canvasRatio = canvas.get("width") / canvas.get("height");
+
+                if (canvasRatio < 0) {
+                    scale = canvas.get("width") / iCanvas.get("width");
+                } else {
+                    scale = canvas.get("height") / iCanvas.get("height");
+                }
+
+                Log.i(LOG_TAG, "Scale: " + scale);
+
+                float centerX = canvas.get("width") / 2f;
+                float centerY = canvas.get("height") / 2f;
+
+                float iCenterX = iCanvas.get("width") / 2f;
+                float iCenterY = iCanvas.get("height") / 2f;
+
+
+                float textX = centerX - (scale * (iCenterX - ((Number) json.get("fromX")).floatValue()));
+                float textY = centerY - (scale * (iCenterY - ((Number) json.get("fromY")).floatValue()));
+
+                textY = textY - getActionBarHeight();
+
+                if (start) {
+                    EditText editText = new EditText(getContext());
+                    editText.setVisibility(VISIBLE);
+                    editText.setImeOptions(EditorInfo.IME_ACTION_DONE);
+
+                    // Add whatever you want as size
+                    int editTextHeight = 70;
+                    int editTextWidth = 200;
+
+                    RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(editTextWidth, editTextHeight);
+
+                    //You could adjust the position
+                    params.topMargin = (int) (textX);
+                    params.leftMargin = (int) (textY);
+                    this.addView(editText, params);
+                    editText.setVisibility(VISIBLE);
+                    editText.setSingleLine();
+                    editText.setImeOptions(EditorInfo.IME_ACTION_DONE);
+                    editText.requestFocus();
+                    editText.setText(text);
+                    editText.setTextSize(mTextSize);
+
+                    createTextAnnotatable(editText, textX, textY);
+
+                    mAnnotationsActive = true;
+
+                }
+                if (end) {
+                    mAnnotationsActive = false;
+                    addAnnotatable(connection.getConnectionId());
+                    mCurrentText = null;
+                } else {
+                    mCurrentText.getEditText().setText(text.toString());
+                }
+                invalidate(); // Need this to finalize the drawing on the screen
             }
+
         } catch (JSONException e) {
             e.printStackTrace();
         }
