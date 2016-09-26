@@ -150,6 +150,7 @@ public class AnnotationsToolbar extends LinearLayout {
         if  (mActionsListener != null ){
             mActionsListener.onColorSelected(color);
         }
+        mDoneBtn.setVisibility(GONE);
     }
 
 
@@ -224,7 +225,6 @@ public class AnnotationsToolbar extends LinearLayout {
                     mDoneBtn.setVisibility(VISIBLE);
                 }
                 else {
-                    mDoneBtn.setVisibility(GONE);
                     restart();
                 }
                 mActionsListener.onItemSelected(v, v.isSelected());
