@@ -6,7 +6,7 @@
 
 This section shows you how to prepare and use the OpenTok Annotations Accelerator Pack as part of an application.
 
-## Add the sample library
+## Add the Annotations library
 
 There are 3 options for installing the OpenTok Annotations Accelerator Pack library:
 
@@ -52,13 +52,11 @@ There are 3 options for installing the OpenTok Annotations Accelerator Pack libr
 
 ## Exploring the code
 
-This section describes how the sample app code design uses recommended best practices to deploy the annotations features.
+For detail about the APIs used to develop this accelerator pack, see the [OpenTok Android SDK Reference](https://tokbox.com/developer/sdks/android/reference/) and [Android API Reference](http://developer.android.com/reference/packages.html).
 
-For detail about the APIs used to develop this sample, see the [OpenTok Android SDK Reference](https://tokbox.com/developer/sdks/android/reference/) and [Android API Reference](http://developer.android.com/reference/packages.html).
+_**NOTE:** The accelerator pack contains logic used for logging. This is used to submit anonymous usage data for internal TokBox purposes only. We request that you do not modify or remove any logging code in your use of this accelerator pack._
 
 ### Class design
-
-The following classes represent the software design for the OpenTok Annotations Accelerator Pack.
 
 | Class        | Description  |
 | ------------- | ------------- |
@@ -74,7 +72,7 @@ The following classes represent the software design for the OpenTok Annotations 
 **NOTE:** Scrolling is frozen while the user adds annotations. Scrolling is re-enabled after the user clicks **Done**, and the annotations are removed at that point.
 
 
-### Using the AnnotationsKit
+### Using the Annotations Acc Pack
 
 
 #### Add the annotation toolbar
@@ -89,6 +87,14 @@ Add the `AnnotationsToolbar` to your layout:</p>
     android:layout_gravity="bottom"/>
 ```
 
+The `AnnotationsToolbar` offers the following actions:
+  - _Freehand Annotation_: Handwritten annotation
+  - _Text Annotation_: Text label annotations.
+  - _Color Picker_: Select a color for the annotation.
+  - _Erase_: Delete the most recent annotation.
+  - _Screen Capture_: Take a screenshot of the annotations.
+  - _Done_: Clear all annotations and re-enabling scrolling.
+
 
 #### Add a custom annotation renderer
 
@@ -96,29 +102,22 @@ If you would like to create a new instance of the `AnnotationsVideoRenderer` cla
 
 ```java
 AnnotationsVideoRenderer mRenderer = new AnnotationsVideoRenderer(this);
-```
-
-
-The following code illustrates how to set the `AnnotationsVideoRenderer` to the publisher or subscriber. For example, if the publisher is screensharing, set the `AnnotationsVideoRenderer` to the publisher screen. This could be used to get a screenshot of the screen:
-
-```java
-mRenderer = new AnnotationsVideoRenderer(getContext());
 mScreenPublisher.setRenderer(mRenderer);
 ```
+
 
 #### Attach the annotation canvas to a view
 
 You can attach an annotation canvas to a publisher or subscriber view:
 
-The following code initializes the `AnnotationsView`, attaches the `AnnotationsToolbar` to the `AnnotationsView`, sets the `VideoRenderer`, and adds the `AnnotationsView` to the publisher or subscriber view:
-
-
 ```java
-if ( mAnnotationsView == null ){
-    mAnnotationsView = new AnnotationsView(getContext(), mSession, mApiKey)
-    mAnnotationsView.attachToolbar(mAnnotationsToolbar);
-    mAnnotationsView.setVideoRenderer(mRenderer); //to use screen capture
-    mScreenView.addView(mAnnotationsView);
+try {
+  AnnotationsView annotationsView = new AnnotationsView(this, mComm.getSession(), OpenTokConfig.API_KEY, mComm.getRemote());
+  annotationsView.attachToolbar(mAnnotationsToolbar);
+  previewContainer.addView(annotationsView);
+          
+} catch (Exception e) {
+  Log.i(LOG_TAG, "Exception - add annotations view " + e);
 }
 ```
 
@@ -126,41 +125,42 @@ if ( mAnnotationsView == null ){
 
 To listen for annotation events, implement an `AnnotationsListener`:
 
-In the following example, the `onScreencaptureReady()` event is fired when a new screen capture is ready.
+```java
+public  interface AnnotationsListener {
+  void onScreencaptureReady(Bitmap bmp);
+  void onAnnotationsSelected(AnnotationsView.Mode mode);
+  void onAnnotationsDone();
+  void onError(String error);
+}
+```
 
 ```java
 public class MainActivity
     extends AppCompatActivity
     implements AnnotationsView.AnnotationsListener {
 
-	@Override
-	public void onScreencaptureReady(Bitmap bmp) {
-    		saveScreencapture(bmp);
-	}
+    @Override
+    public void onScreencaptureReady(Bitmap bmp) {
+        //A new screencapture is ready
+    }
+
+    @Override
+    public void onAnnotationsSelected(AnnotationsView.Mode mode) {
+        //An annotations item in the toolbar is selected
+    }
+
+    @Override
+    public void onAnnotationsDone() {
+        //The DONE button annotations item in the toolbar is selected. Scrolling is re-enabled.
+    }
+
+    @Override
+    public void onError(String error) {
+       //An error happens in the annotations
+    }
+  ...
 }
 ```
-
-For more information, see the `AnnotationsListener` interface, which has the following methods:
-
-```java
-public interface AnnotationsListener {
-
-    void onScreencaptureReady(Bitmap bmp);
-    void onAnnotationsSelected(AnnotationsView.Mode mode);
-    void onAnnotationsDone();
-    void onError(String error);
-}
-```
-
-
-
-You can create handlers for the following types of annotations:
-  - _Freehand Annotation_: Handwritten annotation
-  - _Text Annotation_: Text label annotations.
-  - _Color Picker_: Select a color for the annotation.
-  - _Erase_: Delete the most recent annotation.
-  - _Screen Capture_: Take a screenshot of the annotations.
-  - _Done_: Clear all annotations and re-enabling scrolling.
 
 ## Requirements
 
