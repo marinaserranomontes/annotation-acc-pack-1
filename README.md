@@ -18,7 +18,7 @@ To get started with your development, visit the following sites:
 - [OpenTok Annotations Accelerator Pack for iOS](./ios)
 - [OpenTok Annotations Accelerator Pack for JavaScript](./js)
 
-# Remote annotation availability
+# OpenTok Annotations Accelerator Pack interoperability
 | from/to | Web  | iOS  | Android | 
 | ------- | ---- | ---- | ------- |
 |   Web   | [x]  |  [x] |   [x]   |
