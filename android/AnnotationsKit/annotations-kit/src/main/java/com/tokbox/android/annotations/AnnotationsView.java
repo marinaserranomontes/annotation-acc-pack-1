@@ -59,6 +59,7 @@ import org.json.JSONObject;
 public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.ActionsListener, AccPackSession.SignalListener {
     private static final String LOG_TAG = AnnotationsView.class.getSimpleName();
     private static final String SIGNAL_TYPE = "otAnnotation";
+    private static final String SIGNAL_PLATFORM = "android";
 
     private AnnotationsPath mCurrentPath = null;
     private AnnotationsText mCurrentText = null;
@@ -649,10 +650,8 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
             jsonObject.put("canvasHeight", getDisplayHeight() - getActionBarHeight());
             jsonObject.put("mirrored", mirrored);
             jsonObject.put("text", text);
-            jsonObject.put("start", start);
-            jsonObject.put("end", end);
-            jsonObject.put("font", mTextSize+"px Arial"); //TODO: Fix font type
-
+            jsonObject.put("font", "16px Arial"); //TODO: Fix font type
+            jsonObject.put("platform", SIGNAL_PLATFORM);
             jsonArray.put(jsonObject);
         } catch (JSONException e) {
             e.printStackTrace();
@@ -699,6 +698,7 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
             jsonObject.put("smoothed", false);
             jsonObject.put("startPoint", startPoint);
             jsonObject.put("endPoint", endPoint);
+            jsonObject.put("platform", SIGNAL_PLATFORM);
 
             jsonArray.put(jsonObject);
         } catch (JSONException e) {
@@ -999,39 +999,33 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
 
                 textY = textY - getActionBarHeight();
 
-                if (start) {
-                    EditText editText = new EditText(getContext());
-                    editText.setVisibility(VISIBLE);
-                    editText.setImeOptions(EditorInfo.IME_ACTION_DONE);
+                EditText editText = new EditText(getContext());
+                editText.setVisibility(VISIBLE);
+                editText.setImeOptions(EditorInfo.IME_ACTION_DONE);
 
-                    // Add whatever you want as size
-                    int editTextHeight = 70;
-                    int editTextWidth = 200;
+                // Add whatever you want as size
+                int editTextHeight = 70;
+                int editTextWidth = 200;
 
-                    RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(editTextWidth, editTextHeight);
+                RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(editTextWidth, editTextHeight);
 
-                    //You could adjust the position
-                    params.topMargin = (int) (textX);
-                    params.leftMargin = (int) (textY);
-                    this.addView(editText, params);
-                    editText.setVisibility(VISIBLE);
-                    editText.setSingleLine();
-                    editText.setImeOptions(EditorInfo.IME_ACTION_DONE);
-                    editText.requestFocus();
-                    editText.setText(text);
-                    editText.setTextSize(mTextSize);
+                //You could adjust the position
+                params.topMargin = (int) (textX);
+                params.leftMargin = (int) (textY);
+                this.addView(editText, params);
+                editText.setVisibility(VISIBLE);
+                editText.setSingleLine();
+                editText.setImeOptions(EditorInfo.IME_ACTION_DONE);
+                editText.requestFocus();
+                editText.setText(text);
+                editText.setTextSize(mTextSize);
 
-                    createTextAnnotatable(editText, textX, textY);
-                    mAnnotationsActive = true;
+                createTextAnnotatable(editText, textX, textY);
+                mCurrentText.getEditText().setText(text.toString());
 
-                }
-                if (end) {
-                    mAnnotationsActive = false;
-                    addAnnotatable(connection.getConnectionId());
-                    mCurrentText = null;
-                } else {
-                    mCurrentText.getEditText().setText(text.toString());
-                }
+                mAnnotationsActive = false;
+                addAnnotatable(connection.getConnectionId());
+                mCurrentText = null;
                 invalidate(); // Need this to finalize the drawing on the screen
             }
 
