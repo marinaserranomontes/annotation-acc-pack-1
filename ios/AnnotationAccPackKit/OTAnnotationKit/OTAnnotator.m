@@ -159,7 +159,7 @@ receivedSignalType:(NSString*)type
  fromConnection:(OTConnection*)connection
      withString:(NSString*)string {
     
-    if (![type containsString:@"otAnnotation_pen"]) return;
+    if (![type isEqualToString:@"otAnnotation_pen"]) return;
 
     if (self.receiveAnnotationEnabled &&
         self.session.sessionConnectionStatus == OTSessionConnectionStatusConnected &&
@@ -194,7 +194,8 @@ receivedSignalType:(NSString*)type
         for (NSDictionary *json in jsonArray) {
             
             // this is the unique property from web
-            if (![type containsString:@"ios_"]) {
+            NSString *platform = json[@"platform"];
+            if (platform && [platform isEqualToString:@"web"]) {
                 [self drawOnFitModeWithJson:json path:(OTAnnotationPath *)self.annotationScrollView.annotationView.currentAnnotatable];
                 continue;
             }
@@ -352,7 +353,7 @@ receivedSignalType:(NSString*)type
     
     NSError *error;
     NSString *jsonString = [JSON stringify:signalingPoints];
-    [[OTAcceleratorSession getAcceleratorPackSession] signalWithType:@"ios_otAnnotation_pen" string:jsonString connection:latestScreenShareStream.connection error:&error];
+    [[OTAcceleratorSession getAcceleratorPackSession] signalWithType:@"otAnnotation_pen" string:jsonString connection:latestScreenShareStream.connection error:&error];
     
     // notify sending data
     if (self.dataReceivingHandler) {

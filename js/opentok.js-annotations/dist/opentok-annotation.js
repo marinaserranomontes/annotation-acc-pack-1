@@ -1091,9 +1091,7 @@
     }
 
     var batchSignal = function (data, toConnection) {
-      // We send data in small chunks so that they fit in a signal
-      // Each packet is maximum ~250 chars, we can fit 8192/250 ~= 32 updates per signal
-      var dataCopy = data.slice();
+
       var signalError = function (err) {
         if (err) {
           TB.error(err);
@@ -1109,29 +1107,32 @@
         type = id === 'OT_text' ? 'otAnnotation_text' : 'otAnnotation_pen';
       };
 
-      while (dataCopy.length) {
-        var dataChunk = dataCopy.splice(0, Math.min(dataCopy.length, 32));
+      /**
+       * If the 'type' string exceeds the maximum length (128 bytes), or the
+       * 'data' string exceeds the maximum size (8 kB), OT will return a 413 error
+       * and the signal will not be sent.  The maximum number of characters that
+       * can be sent in the signal is 8,192.  Currently, the largest updates are
+       * 995 characters, meaning that the limit for the number of updates per
+       * signal should be 8, even taking into account the additional characters
+       * required to convert the entire array of updates as opposed to each one
+       * individually.  However, OT is throwing a 413 error once the size exceeds
+       * 7,900 characters. So, 7 is the magic number for the time being.
+       */
+      var dataChunk;
+      var start = 0;
+      var updatesPerSignal = 7;
+      while (start < data.length) {
+        dataChunk = data.slice(start, start + updatesPerSignal);
         updateType(dataChunk);
+        start += updatesPerSignal;
         var signal = {
           type: type,
           data: JSON.stringify(dataChunk)
         };
-        if (toConnection) signal.to = toConnection;
-        self.session.signal(signal, signalError);
-      }
-    };
-
-    var updateTimeout;
-    var sendUpdate = function (update) {
-      if (self.session) {
-        batchUpdates.push(update);
-        if (!updateTimeout) {
-          updateTimeout = setTimeout(function () {
-            batchSignal(batchUpdates);
-            batchUpdates = [];
-            updateTimeout = null;
-          }, 100);
+        if (toConnection) {
+          signal.to = toConnection;
         }
+        self.session.signal(signal, signalError);
       }
     };
   };
@@ -1188,105 +1189,106 @@
         title: 'Shapes',
         icon: [imageAssets, 'annotation-shapes.png'].join(''),
         items: [{
-          id: 'OT_rect',
-          title: 'Rectangle',
-          icon: [imageAssets, 'annotation-rectangle.png'].join(''),
-          points: [
-            [0, 0],
-            [1, 0],
-            [1, 1],
-            [0, 1],
-            [0, 0] // Reconnect point
-          ]
-        },
-        {
-          id: 'OT_rect_fill',
-          title: 'Rectangle-Fill',
-          icon: [imageAssets, 'annotation-rectangle.png'].join(''),
-          points: [
-            [0, 0],
-            [1, 0],
-            [1, 1],
-            [0, 1],
-            [0, 0] // Reconnect point
-          ]
-        }, {
-          id: 'OT_oval',
-          title: 'Oval',
-          icon: [imageAssets, 'annotation-oval.png'].join(''),
-          enableSmoothing: true,
-          points: [
-            [0, 0.5],
-            [0.5 + 0.5 * Math.cos(5 * Math.PI / 4), 0.5 + 0.5 * Math.sin(5 * Math.PI / 4)],
-            [0.5, 0],
-            [0.5 + 0.5 * Math.cos(7 * Math.PI / 4), 0.5 + 0.5 * Math.sin(7 * Math.PI / 4)],
-            [1, 0.5],
-            [0.5 + 0.5 * Math.cos(Math.PI / 4), 0.5 + 0.5 * Math.sin(Math.PI / 4)],
-            [0.5, 1],
-            [0.5 + 0.5 * Math.cos(3 * Math.PI / 4), 0.5 + 0.5 * Math.sin(3 * Math.PI / 4)],
-            [0, 0.5],
-            [0.5 + 0.5 * Math.cos(5 * Math.PI / 4), 0.5 + 0.5 * Math.sin(5 * Math.PI / 4)]
-          ]
-        }, {
-          id: 'OT_oval_fill',
-          title: 'Oval-Fill',
-          icon: [imageAssets, 'annotation-oval-fill.png'].join(''),
-          enableSmoothing: true,
-          points: [
-            [0, 0.5],
-            [0.5 + 0.5 * Math.cos(5 * Math.PI / 4), 0.5 + 0.5 * Math.sin(5 * Math.PI / 4)],
-            [0.5, 0],
-            [0.5 + 0.5 * Math.cos(7 * Math.PI / 4), 0.5 + 0.5 * Math.sin(7 * Math.PI / 4)],
-            [1, 0.5],
-            [0.5 + 0.5 * Math.cos(Math.PI / 4), 0.5 + 0.5 * Math.sin(Math.PI / 4)],
-            [0.5, 1],
-            [0.5 + 0.5 * Math.cos(3 * Math.PI / 4), 0.5 + 0.5 * Math.sin(3 * Math.PI / 4)],
-            [0, 0.5],
-            [0.5 + 0.5 * Math.cos(5 * Math.PI / 4), 0.5 + 0.5 * Math.sin(5 * Math.PI / 4)]
-          ]
-        },{
-          id: 'OT_star',
-          title: 'Star',
-          icon: [imageAssets, 'annotation-star.png'].join(''),
-          points: [
-            /* eslint-disable max-len */
-            [0.5 + 0.5 * Math.cos(90 * (Math.PI / 180)), 0.5 + 0.5 * Math.sin(90 * (Math.PI / 180))],
-            [0.5 + 0.25 * Math.cos(126 * (Math.PI / 180)), 0.5 + 0.25 * Math.sin(126 * (Math.PI / 180))],
-            [0.5 + 0.5 * Math.cos(162 * (Math.PI / 180)), 0.5 + 0.5 * Math.sin(162 * (Math.PI / 180))],
-            [0.5 + 0.25 * Math.cos(198 * (Math.PI / 180)), 0.5 + 0.25 * Math.sin(198 * (Math.PI / 180))],
-            [0.5 + 0.5 * Math.cos(234 * (Math.PI / 180)), 0.5 + 0.5 * Math.sin(234 * (Math.PI / 180))],
-            [0.5 + 0.25 * Math.cos(270 * (Math.PI / 180)), 0.5 + 0.25 * Math.sin(270 * (Math.PI / 180))],
-            [0.5 + 0.5 * Math.cos(306 * (Math.PI / 180)), 0.5 + 0.5 * Math.sin(306 * (Math.PI / 180))],
-            [0.5 + 0.25 * Math.cos(342 * (Math.PI / 180)), 0.5 + 0.25 * Math.sin(342 * (Math.PI / 180))],
-            [0.5 + 0.5 * Math.cos(18 * (Math.PI / 180)), 0.5 + 0.5 * Math.sin(18 * (Math.PI / 180))],
-            [0.5 + 0.25 * Math.cos(54 * (Math.PI / 180)), 0.5 + 0.25 * Math.sin(54 * (Math.PI / 180))],
-            [0.5 + 0.5 * Math.cos(90 * (Math.PI / 180)), 0.5 + 0.5 * Math.sin(90 * (Math.PI / 180))]
-            /* eslint-enable max-len */
-          ]
-        }, {
-          id: 'OT_arrow',
-          title: 'Arrow',
-          icon: [imageAssets, 'annotation-arrow.png'].join(''),
-          points: [
-            [0, 1],
-            [3, 1],
-            [3, 0],
-            [5, 2],
-            [3, 4],
-            [3, 3],
-            [0, 3],
-            [0, 1] // Reconnect point
-          ]
-        }, {
-          id: 'OT_line',
-          title: 'Line',
-          icon: [imageAssets, 'annotation-line.png'].join(''),
-          selectedIcon: [imageAssets, 'annotation-line.png'].join(''),
-          points: [
-            [0, 0],
-            [0, 1]
-          ]
-        }]
+            id: 'OT_rect',
+            title: 'Rectangle',
+            icon: [imageAssets, 'annotation-rectangle.png'].join(''),
+            points: [
+              [0, 0],
+              [1, 0],
+              [1, 1],
+              [0, 1],
+              [0, 0] // Reconnect point
+            ]
+          },
+          {
+            id: 'OT_rect_fill',
+            title: 'Rectangle-Fill',
+            icon: [imageAssets, 'annotation-rectangle.png'].join(''),
+            points: [
+              [0, 0],
+              [1, 0],
+              [1, 1],
+              [0, 1],
+              [0, 0] // Reconnect point
+            ]
+          }, {
+            id: 'OT_oval',
+            title: 'Oval',
+            icon: [imageAssets, 'annotation-oval.png'].join(''),
+            enableSmoothing: true,
+            points: [
+              [0, 0.5],
+              [0.5 + 0.5 * Math.cos(5 * Math.PI / 4), 0.5 + 0.5 * Math.sin(5 * Math.PI / 4)],
+              [0.5, 0],
+              [0.5 + 0.5 * Math.cos(7 * Math.PI / 4), 0.5 + 0.5 * Math.sin(7 * Math.PI / 4)],
+              [1, 0.5],
+              [0.5 + 0.5 * Math.cos(Math.PI / 4), 0.5 + 0.5 * Math.sin(Math.PI / 4)],
+              [0.5, 1],
+              [0.5 + 0.5 * Math.cos(3 * Math.PI / 4), 0.5 + 0.5 * Math.sin(3 * Math.PI / 4)],
+              [0, 0.5],
+              [0.5 + 0.5 * Math.cos(5 * Math.PI / 4), 0.5 + 0.5 * Math.sin(5 * Math.PI / 4)]
+            ]
+          }, {
+            id: 'OT_oval_fill',
+            title: 'Oval-Fill',
+            icon: [imageAssets, 'annotation-oval-fill.png'].join(''),
+            enableSmoothing: true,
+            points: [
+              [0, 0.5],
+              [0.5 + 0.5 * Math.cos(5 * Math.PI / 4), 0.5 + 0.5 * Math.sin(5 * Math.PI / 4)],
+              [0.5, 0],
+              [0.5 + 0.5 * Math.cos(7 * Math.PI / 4), 0.5 + 0.5 * Math.sin(7 * Math.PI / 4)],
+              [1, 0.5],
+              [0.5 + 0.5 * Math.cos(Math.PI / 4), 0.5 + 0.5 * Math.sin(Math.PI / 4)],
+              [0.5, 1],
+              [0.5 + 0.5 * Math.cos(3 * Math.PI / 4), 0.5 + 0.5 * Math.sin(3 * Math.PI / 4)],
+              [0, 0.5],
+              [0.5 + 0.5 * Math.cos(5 * Math.PI / 4), 0.5 + 0.5 * Math.sin(5 * Math.PI / 4)]
+            ]
+          }, {
+            id: 'OT_star',
+            title: 'Star',
+            icon: [imageAssets, 'annotation-star.png'].join(''),
+            points: [
+              /* eslint-disable max-len */
+              [0.5 + 0.5 * Math.cos(90 * (Math.PI / 180)), 0.5 + 0.5 * Math.sin(90 * (Math.PI / 180))],
+              [0.5 + 0.25 * Math.cos(126 * (Math.PI / 180)), 0.5 + 0.25 * Math.sin(126 * (Math.PI / 180))],
+              [0.5 + 0.5 * Math.cos(162 * (Math.PI / 180)), 0.5 + 0.5 * Math.sin(162 * (Math.PI / 180))],
+              [0.5 + 0.25 * Math.cos(198 * (Math.PI / 180)), 0.5 + 0.25 * Math.sin(198 * (Math.PI / 180))],
+              [0.5 + 0.5 * Math.cos(234 * (Math.PI / 180)), 0.5 + 0.5 * Math.sin(234 * (Math.PI / 180))],
+              [0.5 + 0.25 * Math.cos(270 * (Math.PI / 180)), 0.5 + 0.25 * Math.sin(270 * (Math.PI / 180))],
+              [0.5 + 0.5 * Math.cos(306 * (Math.PI / 180)), 0.5 + 0.5 * Math.sin(306 * (Math.PI / 180))],
+              [0.5 + 0.25 * Math.cos(342 * (Math.PI / 180)), 0.5 + 0.25 * Math.sin(342 * (Math.PI / 180))],
+              [0.5 + 0.5 * Math.cos(18 * (Math.PI / 180)), 0.5 + 0.5 * Math.sin(18 * (Math.PI / 180))],
+              [0.5 + 0.25 * Math.cos(54 * (Math.PI / 180)), 0.5 + 0.25 * Math.sin(54 * (Math.PI / 180))],
+              [0.5 + 0.5 * Math.cos(90 * (Math.PI / 180)), 0.5 + 0.5 * Math.sin(90 * (Math.PI / 180))]
+              /* eslint-enable max-len */
+            ]
+          }, {
+            id: 'OT_arrow',
+            title: 'Arrow',
+            icon: [imageAssets, 'annotation-arrow.png'].join(''),
+            points: [
+              [0, 1],
+              [3, 1],
+              [3, 0],
+              [5, 2],
+              [3, 4],
+              [3, 3],
+              [0, 3],
+              [0, 1] // Reconnect point
+            ]
+          }, {
+            id: 'OT_line',
+            title: 'Line',
+            icon: [imageAssets, 'annotation-line.png'].join(''),
+            selectedIcon: [imageAssets, 'annotation-line.png'].join(''),
+            points: [
+              [0, 0],
+              [0, 1]
+            ]
+          }
+        ]
       }, {
         id: 'OT_text',
         title: 'Text',
@@ -1297,7 +1299,7 @@
         title: 'Capture',
         icon: [imageAssets, 'annotation-camera.png'].join(''),
         selectedIcon: [imageAssets, 'annotation-camera.png'].join('')
-      },{
+      }, {
         id: 'OT_undo',
         title: 'Undo',
         icon: [imageAssets, 'annotation-undo.png'].join('')
@@ -1323,7 +1325,7 @@
         if (index !== -1) {
           var toolbarItem = toolbarItems[index];
           if (toolbarItem.title === 'Shapes' && !!options.shapes) {
-            var shapes = options.shapes.reduce(function(shapeAcc, shape) {
+            var shapes = options.shapes.reduce(function (shapeAcc, shape) {
               var shapeIndex = shapeNames.indexOf(shape);
               return shapeIndex !== -1 ? shapeAcc.concat(toolbarItem.items[shapeIndex]) : shapeAcc;
             }, []);
@@ -1518,7 +1520,7 @@
 
           }
 
-            if (item.title === 'Pen' && !Array.isArray(item.items)) {
+          if (item.title === 'Pen' && !Array.isArray(item.items)) {
             // Add defaults
             item.items = [{
               id: 'OT_line_width_2',
@@ -1611,7 +1613,7 @@
 
                         var lineIcon = context.createElement('div');
                         lineIcon.setAttribute('class', 'line-width-icon')
-                        // TODO Allow devs to change this?
+                          // TODO Allow devs to change this?
                         lineIcon.style.backgroundColor = '#FFFFFF';
                         lineIcon.style.width = '80%';
                         lineIcon.style.height = subItem.size + 'px';
@@ -1737,7 +1739,7 @@
           });
         };
 
-        window.addEventListener('OT_clear', function() {
+        window.addEventListener('OT_clear', function () {
           onClear();
           self.selectedItem = null;
           canvases.forEach(function (canvas) {
@@ -1745,8 +1747,8 @@
           });
         });
 
-        window.addEventListener('OT_pen', function(evt) {
-          var item = self.items.find(function(item) {
+        window.addEventListener('OT_pen', function (evt) {
+          var item = self.items.find(function (item) {
             return item.id === 'OT_pen';
           });
 
@@ -1825,7 +1827,7 @@
       canvas.link(self.session);
       canvas.colors(self.colors);
       canvases.push(canvas);
-      canvases.forEach(function(canvas) {
+      canvases.forEach(function (canvas) {
         canvas.selectedItem = canvas.selectedItem || self.items[0];
       });
     };
@@ -1873,6 +1875,7 @@
   };
 
 }.call(this));
+
 /* global OT OTSolution OTKAnalytics ScreenSharingAccPack define */
 (function () {
   /** Include external dependencies */
