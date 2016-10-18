@@ -170,10 +170,10 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
     }
 
     /**
-    * Constructor
-    * @param context Application context
-    * @param attrs A collection of attributes
-    */
+     * Constructor
+     * @param context Application context
+     * @param attrs A collection of attributes
+     */
     public AnnotationsView(Context context, AttributeSet attrs) {
         super(context, attrs);
         init();
@@ -203,11 +203,11 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
     }
 
     /**
-    * Constructor publisher annotations
-    * @param context Application context
-    * @param session The OpenTok Accelerator Pack session instance.
-    * @param partnerId  The partner id - apiKey.
-    */
+     * Constructor publisher annotations
+     * @param context Application context
+     * @param session The OpenTok Accelerator Pack session instance.
+     * @param partnerId  The partner id - apiKey.
+     */
     public AnnotationsView(Context context, AccPackSession session, String partnerId, boolean isScreensharing, Publisher local) throws Exception {
         super(context);
 
@@ -283,8 +283,8 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
     }
 
     /**
-    * Returns the AnnotationsVideoRenderer
-    */
+     * Returns the AnnotationsVideoRenderer
+     */
     public AnnotationsVideoRenderer getVideoRenderer() {
         return videoRenderer;
     }
@@ -298,8 +298,8 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
     }
 
     /**
-    * Restarts the AnnotationsView. Clear all the annotations.
-    */
+     * Restarts the AnnotationsView. Clear all the annotations.
+     */
     public void restart(){
         clearAll(false, mSession.getConnection().getConnectionId());
     }
@@ -1141,14 +1141,6 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
                         public void onTextChanged(CharSequence s, int start, int before,
                                                   int count) {
                             drawText();
-
-                            if (count == 1){
-                                //start text is true
-                                sendAnnotation(mode.toString(), buildSignalFromText(x, y, s.toString(), true, false));
-                            }
-                            else {
-                                sendAnnotation(mode.toString(), buildSignalFromText(x, y, s.toString(), false, false));
-                            }
                         }
 
                         @Override
@@ -1220,15 +1212,12 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
                     canvas.drawRect(x, y - result.height() - 20 + (strings.length * 50), x + result.width() + 20, y, borderPaint);
 
                     for (int i = 0; i < strings.length; i++) {
-
                         canvas.drawText(strings[i], x, y, mCurrentPaint);
-
                         y = y + 50;
                     }
                 } else {
                     canvas.drawRect(mCurrentText.getX(), 340 - result.height() - 20, mCurrentText.getX() + result.width() + 20, 340, borderPaint);
                     canvas.drawText(mCurrentText.getEditText().getText().toString(), mCurrentText.getX(), 340, mCurrentPaint);
-
                 }
             }
             if ( mCurrentPath != null ) {
