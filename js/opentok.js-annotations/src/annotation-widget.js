@@ -736,7 +736,7 @@
         history.startPoint = !!history.startPoint;
 
         var secondPoint = false;
-        var isText = !!history.selectedItem && history.selectedItem.title === 'Text' && history.text;
+        var isText = history.hasOwnProperty('text');
 
         if (isText) {
           ctx.font = history.font;
