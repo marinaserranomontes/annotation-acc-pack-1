@@ -156,10 +156,10 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
     public enum Mode {
         Pen("otAnnotation_pen"),
         Undo("otAnnotation_undo"),
+        Clear("otAnnotation_clear"),
         Text("otAnnotation_text"),
         Color("otAnnotation_color"),
-        Capture("otAnnotation_capture"),
-        Done("otAnnotation_done");
+        Capture("otAnnotation_capture");
 
         private String type;
 
@@ -206,7 +206,7 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
         this.mWrapper.addSignalListener(Mode.Pen.toString(), this);
         this.mWrapper.addSignalListener(Mode.Text.toString(), this);
         this.mWrapper.addSignalListener(Mode.Undo.toString(), this);
-        this.mWrapper.addSignalListener(Mode.Done.toString(), this);
+        this.mWrapper.addSignalListener(Mode.Clear.toString(), this);
 
         this.isScreensharing = isScreensharing;
         init();
@@ -235,7 +235,7 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
         this.mWrapper.addSignalListener(Mode.Pen.toString(), this);
         this.mWrapper.addSignalListener(Mode.Text.toString(), this);
         this.mWrapper.addSignalListener(Mode.Undo.toString(), this);
-        this.mWrapper.addSignalListener(Mode.Done.toString(), this);
+        this.mWrapper.addSignalListener(Mode.Clear.toString(), this);
 
         this.isScreensharing = false;
         this.mRemoteConnId = remoteConnId;
@@ -517,19 +517,20 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
     }
 
     private void clearAll(boolean incoming, String cid){
-
+        JSONArray jsonArray = new JSONArray();
         if (mAnnotationsManager.getAnnotatableList().size() > 0) {
             int i = mAnnotationsManager.getAnnotatableList().size() - 1;
             while (i >= 0) {
                 Annotatable annotatable = mAnnotationsManager.getAnnotatableList().get(i);
                 if (annotatable.getCId().equals(cid)) {
                     mAnnotationsManager.getAnnotatableList().remove(i);
+                    jsonArray.put(annotatable.getCId());
                     i--;
                 }
                 invalidate();
             }
             if (!incoming && !isScreensharing) {
-                sendAnnotation(mode.toString(), "");
+                sendAnnotation(mode.toString(), null);
             }
         }
     }
@@ -552,7 +553,9 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
             invalidate();
 
             if (!incoming && !isScreensharing){
-                sendAnnotation(mode.toString(), "");
+                JSONArray jsonArray = new JSONArray();
+                    jsonArray.put(cid);
+                    sendAnnotation(mode.toString(), jsonArray.toString());
             }
         }
     }
@@ -1252,7 +1255,7 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
             public void run() {
 
                 if (v.getId() == R.id.done) {
-                    mode = Mode.Done;
+                    mode = Mode.Clear;
                     clearAll(false, mWrapper.getOwnConnId());
                     AnnotationsView.this.setVisibility(GONE);
                     mListener.onAnnotationsDone();
@@ -1345,9 +1348,9 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
                             mode = Mode.Undo;
                             undoAnnotation(true, cid);
                         } else {
-                            if (signalInfo.mSignalName.equalsIgnoreCase(Mode.Done.toString())) {
-                                Log.i(LOG_TAG, "New done annotations is received"); //todo done or clear?
-                                mode = Mode.Done;
+                            if (signalInfo.mSignalName.equalsIgnoreCase(Mode.Clear.toString())) {
+                                Log.i(LOG_TAG, "New clear annotations is received");
+                                mode = Mode.Clear;
                                 clearAll(true, cid);
                             } else {
                                 if (signalInfo.mSignalName.equalsIgnoreCase(Mode.Text.toString())) {
