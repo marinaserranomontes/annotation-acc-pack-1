@@ -89,6 +89,18 @@
     [self addPoint:point];
 }
 
+- (void)drawCurveTo:(OTAnnotationPoint*)toThePoint  from:(OTAnnotationPoint*)fromThePoint{
+    
+    CGPoint fromPoint = [fromThePoint cgPoint];
+    CGPoint toPoint = [toThePoint cgPoint];
+    CGPoint controlPoint = CGPointMake((fromPoint.x + toPoint.x) / 2, (fromPoint.y + toPoint.y) / 2);
+    
+    [self addQuadCurveToPoint:controlPoint controlPoint:fromPoint];
+    
+    [self addPoint:toThePoint];
+
+}
+
 #pragma mark - private method
 - (void)addPoint:(OTAnnotationPoint *)touchPoint {
     if (_mutablePoints.count == 0) {

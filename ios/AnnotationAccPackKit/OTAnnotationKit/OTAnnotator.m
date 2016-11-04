@@ -278,14 +278,31 @@ receivedSignalType:(NSString*)type
         pt1 = [OTAnnotationPoint pointWithX:fromX andY:actualDrawingFromY];
         pt2 = [OTAnnotationPoint pointWithX:toX andY:actualDrawingToY];
     }
+    if([json[@"smoothed"] boolValue]){
+            if([json[@"startPoint"] boolValue] && (path.points.count == 0) ){
+                [path startAtPoint:pt1];
+                [path drawCurveTo:pt2 from:pt1];
+            }
+            else {
+                [path drawCurveTo:pt2 from:pt1];
+                
+                if([json[@"endPoint"] boolValue]){
+                    [path closePath];
 
-    if (path.points.count == 0) {
-        [path startAtPoint:pt1];
-        [path drawToPoint:pt2];
+                }
+            }
+        
     }
-    else {
-        [path drawToPoint:pt1];
-        [path drawToPoint:pt2];
+    else
+    {
+        if (path.points.count == 0) {
+            [path startAtPoint:pt1];
+            [path drawToPoint:pt2];
+        }
+        else {
+            [path drawToPoint:pt1];
+            [path drawToPoint:pt2];
+        }
     }
 }
 
