@@ -1,6 +1,7 @@
 package com.tokbox.android.annotations;
 
 
+import android.app.Activity;
 import android.content.Context;
 import android.util.AttributeSet;
 import android.view.Display;
@@ -34,29 +35,30 @@ public class AnnotationsToolbar extends LinearLayout {
 
     /**
      * Monitors state changes in the AnnotationsToolbar.
-     *
      */
-    public  interface ActionsListener {
+    public interface ActionsListener {
 
         /**
          * Invoked when a new AnnotationsToolbar's item is clicked
          *
-         * @param v View: item
+         * @param v        View: item
          * @param selected Whether the item has been selected (<code>true</code>) or not (
          *                 <code>false</code>).
          */
         void onItemSelected(View v, boolean selected);
+
         void onColorSelected(int color);
     }
 
     /**
      * Constructor
+     *
      * @param context Application context
      */
     public AnnotationsToolbar(Context context) throws Exception {
         super(context);
 
-        if ( context == null ){
+        if (context == null) {
             throw new Exception("Context cannot be null");
         }
         mContext = context;
@@ -69,13 +71,14 @@ public class AnnotationsToolbar extends LinearLayout {
 
     /**
      * Constructor
+     *
      * @param context Application context
-     * @param attrs A collection of attributes
+     * @param attrs   A collection of attributes
      */
     public AnnotationsToolbar(Context context, AttributeSet attrs) throws Exception {
         super(context, attrs);
 
-        if ( context == null ){
+        if (context == null) {
             throw new Exception("Context cannot be null");
         }
 
@@ -89,6 +92,7 @@ public class AnnotationsToolbar extends LinearLayout {
 
     /**
      * Sets AnnotationsToolbar listener
+     *
      * @param listener: ActionsListener
      */
     public void setActionListener(ActionsListener listener) {
@@ -110,13 +114,13 @@ public class AnnotationsToolbar extends LinearLayout {
 
         final int mCount = mColorToolbar.getChildCount();
 
-        int [] colors = {R.color.picker_color_blue,  R.color.picker_color_purple, R.color.picker_color_red, R.color.picker_color_orange,
-                R.color.picker_color_yellow, R.color.picker_color_green,  R.color.picker_color_black, R.color.picker_color_gray, R.color.picker_color_white};
+        int[] colors = {R.color.picker_color_blue, R.color.picker_color_purple, R.color.picker_color_red, R.color.picker_color_orange,
+                R.color.picker_color_yellow, R.color.picker_color_green, R.color.picker_color_black, R.color.picker_color_gray, R.color.picker_color_white};
 
         // Loop through all of the children.
         for (int i = 0; i < mCount; ++i) {
             mColorToolbar.getChildAt(i).setOnClickListener(colorClickListener);
-            ((ImageButton)mColorToolbar.getChildAt(i)).setColorFilter(getResources().getColor(colors [i]));
+            ((ImageButton) mColorToolbar.getChildAt(i)).setColorFilter(getResources().getColor(colors[i]));
         }
 
         //Init actions
@@ -133,34 +137,35 @@ public class AnnotationsToolbar extends LinearLayout {
 
     private OnClickListener colorClickListener = new OnClickListener() {
         @Override
-        public void onClick(View v) {
+        public void onClick(final View v) {
+
             int color = getResources().getColor(R.color.picker_color_orange);
 
-            if (v.getId() == R.id.picker_purple){
+            if (v.getId() == R.id.picker_purple) {
                 color = getResources().getColor(R.color.picker_color_purple);
             }
-            if (v.getId() == R.id.picker_red){
+            if (v.getId() == R.id.picker_red) {
                 color = getResources().getColor(R.color.picker_color_red);
             }
-            if (v.getId() == R.id.picker_orange){
+            if (v.getId() == R.id.picker_orange) {
                 color = getResources().getColor(R.color.picker_color_orange);
             }
-            if (v.getId() == R.id.picker_blue){
+            if (v.getId() == R.id.picker_blue) {
                 color = getResources().getColor(R.color.picker_color_blue);
             }
-            if (v.getId() == R.id.picker_green){
+            if (v.getId() == R.id.picker_green) {
                 color = getResources().getColor(R.color.picker_color_green);
             }
-            if (v.getId() == R.id.picker_white){
+            if (v.getId() == R.id.picker_white) {
                 color = getResources().getColor(R.color.picker_color_white);
             }
-            if (v.getId() == R.id.picker_black){
+            if (v.getId() == R.id.picker_black) {
                 color = getResources().getColor(R.color.picker_color_black);
             }
-            if (v.getId() == R.id.picker_yellow){
+            if (v.getId() == R.id.picker_yellow) {
                 color = getResources().getColor(R.color.picker_color_yellow);
             }
-            if (v.getId() == R.id.picker_gray){
+            if (v.getId() == R.id.picker_gray) {
                 color = getResources().getColor(R.color.picker_color_gray);
             }
 
@@ -171,25 +176,25 @@ public class AnnotationsToolbar extends LinearLayout {
                 v.setSelected(true);
             }
 
-            if  (mActionsListener != null ){
+            if (mActionsListener != null) {
                 mActionsListener.onColorSelected(color);
             }
         }
+
     };
 
 
     private OnClickListener mActionsClickListener = new OnClickListener() {
         @Override
-        public void onClick(View v) {
-            if ( mActionsListener != null ){
-                if (v.getId() == R.id.picker_color){
+        public void onClick(final View v) {
+            if (mActionsListener != null) {
+                if (v.getId() == R.id.picker_color) {
                     if (mColorScrollView.getVisibility() == View.GONE)
                         mColorScrollView.setVisibility(View.VISIBLE);
                     else {
                         mColorScrollView.setVisibility(View.GONE);
                     }
-                }
-                else {
+                } else {
                     mColorScrollView.setVisibility(View.GONE);
                 }
                 updateSelectedButtons(v);
@@ -200,39 +205,44 @@ public class AnnotationsToolbar extends LinearLayout {
                         v.setSelected(true);
                     }
                     mDoneBtn.setVisibility(VISIBLE);
-                }
-                else {
+                } else {
                     restart();
                 }
                 mActionsListener.onItemSelected(v, v.isSelected());
             }
         }
+
     };
-    private void updateColorPickerSelectedButtons(View v, int color){
-        int mCount = mColorToolbar.getChildCount();
+
+    private void updateColorPickerSelectedButtons(final View v, final int color) {
+        final int mCount = mColorToolbar.getChildCount();
 
         mPickerColorBtn.setColorFilter(color);
 
         for (int i = 0; i < mCount; ++i) {
-            if (mColorToolbar.getChildAt(i).getId() != v.getId() && mColorToolbar.getChildAt(i).isSelected()){
+            if (mColorToolbar.getChildAt(i).getId() != v.getId() && mColorToolbar.getChildAt(i).isSelected()) {
                 mColorToolbar.getChildAt(i).setSelected(false);
             }
         }
+
     }
-    private void updateSelectedButtons(View v){
-        int mCount = mMainToolbar.getChildCount();
+
+    private void updateSelectedButtons(final View v) {
+        final int mCount = mMainToolbar.getChildCount();
 
         for (int i = 0; i < mCount; ++i) {
-            if (mMainToolbar.getChildAt(i).getId() != v.getId() && mMainToolbar.getChildAt(i).isSelected()){
+            if (mMainToolbar.getChildAt(i).getId() != v.getId() && mMainToolbar.getChildAt(i).isSelected()) {
                 mMainToolbar.getChildAt(i).setSelected(false);
             }
         }
+
     }
 
     /**
      * Restarts the toolbar actions
      */
-    public void restart(){
+    public void restart() {
+
         int mCount = mMainToolbar.getChildCount();
         for (int i = 0; i < mCount; ++i) {
             mMainToolbar.getChildAt(i).setSelected(false);
@@ -245,11 +255,9 @@ public class AnnotationsToolbar extends LinearLayout {
 
         int color = getResources().getColor(R.color.picker_color_orange);
         mPickerColorBtn.setColorFilter(color);
-        if  (mActionsListener != null ){
+        if (mActionsListener != null) {
             mActionsListener.onColorSelected(color);
         }
         mDoneBtn.setVisibility(GONE);
     }
-
-
 }

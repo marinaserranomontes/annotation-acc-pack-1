@@ -31,15 +31,15 @@ import android.widget.EditText;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-import com.opentok.android.Connection;
 import com.opentok.android.Publisher;
-import com.opentok.android.Session;
 import com.opentok.android.Subscriber;
-import com.tokbox.android.accpack.AccPackSession;
 import com.tokbox.android.annotations.config.OpenTokConfig;
+import com.tokbox.android.annotations.utils.AnnotationsVideoRenderer;
 import com.tokbox.android.logging.OTKAnalytics;
 import com.tokbox.android.logging.OTKAnalyticsData;
-import com.tokbox.android.annotations.utils.AnnotationsVideoRenderer;
+import com.tokbox.android.otsdkwrapper.listeners.SignalListener;
+import com.tokbox.android.otsdkwrapper.signal.SignalInfo;
+import com.tokbox.android.otsdkwrapper.wrapper.OTWrapper;
 
 
 import java.lang.reflect.Method;
@@ -56,7 +56,7 @@ import org.json.JSONObject;
 /**
  * Defines the view to draw annotations
  */
-public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.ActionsListener, AccPackSession.SignalListener {
+public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.ActionsListener, SignalListener {
     private static final String LOG_TAG = AnnotationsView.class.getSimpleName();
     private static final String SIGNAL_TYPE = "otAnnotation";
     private static final String SIGNAL_PLATFORM = "android";
@@ -70,6 +70,7 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
     private int mCurrentColor = 0;
     private int mSelectedColor = 0;
     private float mLineWidth = 10.0f;
+    private float mIncomingLineWidth = 0.0f;
     private int mTextSize = 48;
     private AnnotationsManager mAnnotationsManager;
 
@@ -90,9 +91,10 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
 
     private boolean defaultLayout = false;
 
-    private AccPackSession mSession;
+    //private AccPackSession mSession;
     private Subscriber mRemote;
     private Publisher mLocal;
+    private String mRemoteConnId;
 
     private String mPartnerId;
 
@@ -111,7 +113,8 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
     private Context mContext;
 
     private ViewGroup mContentView;
-    private String mType;
+
+    private OTWrapper mWrapper;
 
     /**
      * Monitors state changes in the Annotations component.
@@ -152,7 +155,7 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
      */
     public enum Mode {
         Pen("otAnnotation_pen"),
-        Clear("otAnnotation_clear"),
+        Undo("otAnnotation_undo"),
         Text("otAnnotation_text"),
         Color("otAnnotation_color"),
         Capture("otAnnotation_capture"),
@@ -180,72 +183,62 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
     }
 
     /**
-     * Constructor publisher annotations
-     * @param context Application context
-     * @param session The OpenTok Accelerator Pack session instance.
-     * @param partnerId  The partner id - apiKey.
+     * Creates a new AnnotationView instance for local screensharing. isScreensharing should be true
+     * @param context
+     * @param wrapper
+     * @param partnerId
+     * @param isScreensharing
+     * @throws Exception
      */
-    public AnnotationsView(Context context, AccPackSession session, String partnerId, boolean isScreensharing) throws Exception {
+    public AnnotationsView(Context context, OTWrapper wrapper, String partnerId, boolean isScreensharing) throws Exception {
         super(context);
 
-        if ( session == null ) {
-            throw new Exception("Session cannot be null in the annotations");
+        if ( wrapper == null ) {
+            throw new Exception("Wrapper cannot be null in the annotations");
         }
-        if ( session.getConnection() == null ){
+        if ( wrapper.getOwnConnId() == null ){
             throw new Exception("Session is not connected");
         }
         this.mContext = context;
-        this.mSession = session;
+        this.mWrapper = wrapper;
         this.mPartnerId = partnerId;
-        this.mSession.setSignalListener(this);
+        //add a listener for each type of signal to avoid breaking the interoperability
+        this.mWrapper.addSignalListener(Mode.Pen.toString(), this);
+        this.mWrapper.addSignalListener(Mode.Text.toString(), this);
+        this.mWrapper.addSignalListener(Mode.Undo.toString(), this);
+        this.mWrapper.addSignalListener(Mode.Done.toString(), this);
+
         this.isScreensharing = isScreensharing;
         init();
     }
 
     /**
-     * Constructor publisher annotations
-     * @param context Application context
-     * @param session The OpenTok Accelerator Pack session instance.
-     * @param partnerId  The partner id - apiKey.
+     * Creates a new AnnotationsView instance for remote screensharing
+     * @param context
+     * @param wrapper
+     * @param partnerId
+     * @param remoteConnId
+     * @throws Exception
      */
-    public AnnotationsView(Context context, AccPackSession session, String partnerId, boolean isScreensharing, Publisher local) throws Exception {
+    public AnnotationsView(Context context, OTWrapper wrapper, String partnerId, String remoteConnId) throws Exception {
         super(context);
-
-        if ( session == null ) {
-            throw new Exception("Session cannot be null in the annotations");
+        if ( wrapper == null ) {
+            throw new Exception("Wrapper cannot be null in the annotations");
         }
-        if ( session.getConnection() == null ){
+        if ( wrapper.getOwnConnId() == null ){
             throw new Exception("Session is not connected");
         }
         this.mContext = context;
-        this.mSession = session;
+        this.mWrapper = wrapper;
         this.mPartnerId = partnerId;
-        this.mSession.setSignalListener(this);
-        this.isScreensharing = isScreensharing;
-        this.mLocal = local;
-        init();
-    }
+        //add a listener for each type of signal to avoid breaking the interoperability
+        this.mWrapper.addSignalListener(Mode.Pen.toString(), this);
+        this.mWrapper.addSignalListener(Mode.Text.toString(), this);
+        this.mWrapper.addSignalListener(Mode.Undo.toString(), this);
+        this.mWrapper.addSignalListener(Mode.Done.toString(), this);
 
-    /**
-     * Constructor subscriber annotations
-     * @param context Application context
-     * @param session The OpenTok Accelerator Pack session instance.
-     * @param partnerId  The partner id - apiKey.
-     */
-    public AnnotationsView(Context context, AccPackSession session, String partnerId, Subscriber remote) throws Exception {
-        super(context);
-        if ( session == null ) {
-            throw new Exception("Session cannot be null in the annotations");
-        }
-        if ( session.getConnection() == null ){
-            throw new Exception("Session is not connected");
-        }
-        this.mContext = context;
-        this.mSession = session;
-        this.mPartnerId = partnerId;
-        this.mSession.setSignalListener(this);
         this.isScreensharing = false;
-        this.mRemote = remote;
+        this.mRemoteConnId = remoteConnId;
         init();
     }
 
@@ -301,7 +294,7 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
      * Restarts the AnnotationsView. Clear all the annotations.
      */
     public void restart(){
-        clearAll(false, mSession.getConnection().getConnectionId());
+        clearAll(false, mWrapper.getOwnConnId());
     }
 
     @Override
@@ -324,9 +317,9 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
         //init analytics
         mAnalyticsData = new OTKAnalyticsData.Builder(OpenTokConfig.LOG_CLIENT_VERSION, source, OpenTokConfig.LOG_COMPONENTID, guidVSol).build();
         mAnalytics = new OTKAnalytics(mAnalyticsData);
-        if ( mSession != null ) {
-            mAnalyticsData.setSessionId(mSession.getSessionId());
-            mAnalyticsData.setConnectionId(mSession.getConnection().getConnectionId());
+        if ( mWrapper != null ) {
+            mAnalyticsData.setSessionId(mWrapper.getOTConfig().getSessionId());
+            mAnalyticsData.setConnectionId(mWrapper.getOwnConnId());
         }
         if ( mPartnerId != null ) {
             mAnalyticsData.setPartnerId(mPartnerId);
@@ -449,7 +442,6 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
     }
 
     private int getActionBarHeight() {
-
         int actionBarHeight = 0;
         Rect rect = new Rect();
         Window window = ((Activity)mContext).getWindow();
@@ -543,7 +535,7 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
     }
 
 
-    private void clearCanvas(boolean incoming, String cid) {
+    private void undoAnnotation(boolean incoming, String cid) {
         boolean removed = false;
         if (mAnnotationsManager.getAnnotatableList().size() > 0) {
             int i = mAnnotationsManager.getAnnotatableList().size() - 1;
@@ -581,7 +573,12 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
         mCurrentPaint.setColor(mCurrentColor);
         mCurrentPaint.setStyle(Paint.Style.STROKE);
         mCurrentPaint.setStrokeJoin(Paint.Join.ROUND);
-        mCurrentPaint.setStrokeWidth(mLineWidth);
+        if (incoming) {
+            mCurrentPaint.setStrokeWidth(mIncomingLineWidth);
+        }
+        else {
+            mCurrentPaint.setStrokeWidth(mLineWidth);
+        }
         if (mode != null && mode == Mode.Pen) {
             mCurrentPath = new AnnotationsPath();
         }
@@ -611,8 +608,8 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
     }
 
     private void sendAnnotation(String type, String annotation) {
-        if ( mSession != null  && !isScreensharing) {
-            mSession.sendSignal(type, annotation);
+        if ( mWrapper != null  && !isScreensharing) {
+            mWrapper.sendSignal(new SignalInfo(mWrapper.getOwnConnId(), null, type, annotation));
         }
     }
 
@@ -632,15 +629,16 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
         }
 
         try {
-            if ( mRemote != null && mRemote.getStream() != null ){
-                jsonObject.put("id", mRemote.getStream().getConnection().getConnectionId());
+            if ( mRemote != null || mRemoteConnId != null ){
+                jsonObject.put("id", mRemoteConnId);
             }
             else {
                 if ( mLocal != null && mLocal.getStream() != null ) {
                     jsonObject.put("id", mLocal.getStream().getConnection().getConnectionId());
                 }
             }
-            jsonObject.put("fromId", mSession.getConnection().getConnectionId());
+
+            jsonObject.put("fromId", mWrapper.getOwnConnId());
             jsonObject.put("fromX", x);
             jsonObject.put("fromY", y);
             jsonObject.put("color", String.format("#%06X", (0xFFFFFF & mCurrentColor)));
@@ -652,6 +650,7 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
             jsonObject.put("text", text);
             jsonObject.put("font", "16px Arial"); //TODO: Fix font type
             jsonObject.put("platform", SIGNAL_PLATFORM);
+            jsonObject.put("mode", mode);
             jsonArray.put(jsonObject);
         } catch (JSONException e) {
             e.printStackTrace();
@@ -668,22 +667,21 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
         int videoWidth = 0;
         int videoHeight = 0;
 
-
         if (videoRenderer != null) {
             mirrored = videoRenderer.isMirrored();
             videoWidth = videoRenderer.getVideoWidth();
             videoHeight = videoRenderer.getVideoHeight();
         }
         try {
-            if ( mRemote != null && mRemote.getStream() != null ){
-                jsonObject.put("id", mRemote.getStream().getConnection().getConnectionId());
+            if ( mRemote != null || mRemoteConnId != null ){
+                jsonObject.put("id", mRemoteConnId);
             }
             else {
                 if ( mLocal != null && mLocal.getStream() != null ) {
                     jsonObject.put("id", mLocal.getStream().getConnection().getConnectionId());
                 }
             }
-            jsonObject.put("fromId", mSession.getConnection().getConnectionId());
+            jsonObject.put("fromId", mWrapper.getOwnConnId());
             jsonObject.put("fromX", mCurrentPath.getEndPoint().x);
             jsonObject.put("fromY", mCurrentPath.getEndPoint().y);
             jsonObject.put("toX", x);
@@ -699,7 +697,7 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
             jsonObject.put("startPoint", startPoint);
             jsonObject.put("endPoint", endPoint);
             jsonObject.put("platform", SIGNAL_PLATFORM);
-
+            jsonObject.put("mode", mode);
             jsonArray.put(jsonObject);
         } catch (JSONException e) {
             e.printStackTrace();
@@ -708,7 +706,7 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
         return jsonArray.toString();
     }
 
-    private void penAnnotations(Connection connection, String data) {
+    private void penAnnotations(String connectionId, String data) {
         mode = Mode.Pen;
 
         // Build object from JSON array
@@ -717,6 +715,11 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
 
             for (int i = 0; i < updates.length(); i++) {
                 JSONObject json = updates.getJSONObject(i);
+
+                String platform = null;
+                if (!json.isNull("platform")) {
+                    platform = (String) json.get("platform");
+                }
 
                 String id = (String) json.get("id");
                 if (json.get("mirrored") instanceof Number) {
@@ -761,7 +764,7 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
                     mCurrentColor = Color.parseColor(((String) json.get("color")).toLowerCase());
                 }
                 if (!json.isNull("lineWidth")){
-                    mLineWidth = ((Number) json.get("lineWidth")).floatValue();
+                    mIncomingLineWidth = ((Number) json.get("lineWidth")).floatValue();
                 }
 
                 float scale = 1;
@@ -848,7 +851,7 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
 
                         if (endPoint) {
                             try {
-                                addAnnotatable(connection.getConnectionId());
+                                addAnnotatable(connectionId);
                             } catch (Exception e) {
                                 Log.e(LOG_TAG, e.toString());
                             }
@@ -865,7 +868,7 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
                         moveTouch(toX, toY, false);
                         upTouch();
                         try {
-                            addAnnotatable(connection.getConnectionId());
+                            addAnnotatable(connectionId);
                         } catch (Exception e) {
                             Log.e(LOG_TAG, e.toString());
                         }
@@ -878,7 +881,7 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
                         moveTouch(toX, toY, false);
                         upTouch();
                         try {
-                            addAnnotatable(connection.getConnectionId());
+                            addAnnotatable(connectionId);
                         } catch (Exception e) {
                             Log.e(LOG_TAG, e.toString());
                         }
@@ -889,9 +892,9 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
                     }
                 }
 
-                if (mType.contains("ios") && (i == updates.length()-1)){
+                if (platform.contains("ios") && (i == updates.length()-1)){
                     try {
-                        addAnnotatable(connection.getConnectionId());
+                        addAnnotatable(connectionId);
                     } catch (Exception e) {
                         Log.e(LOG_TAG, e.toString());
                     }
@@ -904,7 +907,7 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
         }
     }
 
-    private void textAnnotation(Connection connection, String data) throws Exception{
+    private void textAnnotation(String connectionId, String data) throws Exception{
 
         mode = Mode.Text;
         // Build object from JSON array
@@ -1024,7 +1027,7 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
                 mCurrentText.getEditText().setText(text.toString());
 
                 mAnnotationsActive = false;
-                addAnnotatable(connection.getConnectionId());
+                addAnnotatable(connectionId);
                 mCurrentText = null;
                 invalidate(); // Need this to finalize the drawing on the screen
             }
@@ -1091,7 +1094,7 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
                         upTouch();
                         sendAnnotation(mode.toString(), buildSignalFromPoint(x,y, false, true));
                         try {
-                            addAnnotatable(mSession.getConnection().getConnectionId());
+                            addAnnotatable(mWrapper.getOwnConnId());
 
                         }catch (Exception e){
                             Log.e(LOG_TAG, e.toString());
@@ -1168,7 +1171,7 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
                                 mAnnotationsActive = false;
 
                                 try {
-                                    addAnnotatable(mSession.getConnection().getConnectionId());
+                                    addAnnotatable(mWrapper.getOwnConnId());
 
                                 }catch (Exception e){
                                     Log.e(LOG_TAG, e.toString());
@@ -1243,67 +1246,69 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
     }
 
     @Override
-    public void onItemSelected(View v, boolean selected) {
+    public void onItemSelected(final View v, final boolean selected) {
+        ((Activity)mContext).runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
 
-        if (v.getId() == R.id.done) {
-            mode = Mode.Done;
-            clearAll(false, mSession.getConnection().getConnectionId());
-            this.setVisibility(GONE);
-            mListener.onAnnotationsDone();
-            addLogEvent(OpenTokConfig.LOG_ACTION_DONE, OpenTokConfig.LOG_VARIATION_SUCCESS);
-        }
-        if (v.getId() == R.id.erase) {
-            mode = Mode.Clear;
-            clearCanvas(false, mSession.getConnection().getConnectionId());
+                if (v.getId() == R.id.done) {
+                    mode = Mode.Done;
+                    clearAll(false, mWrapper.getOwnConnId());
+                    AnnotationsView.this.setVisibility(GONE);
+                    mListener.onAnnotationsDone();
+                    addLogEvent(OpenTokConfig.LOG_ACTION_DONE, OpenTokConfig.LOG_VARIATION_SUCCESS);
+                }
+                if (v.getId() == R.id.erase) {
+                    mode = Mode.Undo;
+                    undoAnnotation(false, mWrapper.getOwnConnId());
 
-            addLogEvent(OpenTokConfig.LOG_ACTION_ERASE, OpenTokConfig.LOG_VARIATION_SUCCESS);
-        }
-        if (v.getId() == R.id.screenshot) {
-            //screenshot capture
-            mode = Mode.Capture;
-            if (videoRenderer != null) {
-                Bitmap bmp = videoRenderer.captureScreenshot();
+                    addLogEvent(OpenTokConfig.LOG_ACTION_ERASE, OpenTokConfig.LOG_VARIATION_SUCCESS);
+                }
+                if (v.getId() == R.id.screenshot) {
+                    //screenshot capture
+                    mode = Mode.Capture;
+                    if (videoRenderer != null) {
+                        Bitmap bmp = videoRenderer.captureScreenshot();
 
-                if (bmp != null) {
+                        if (bmp != null) {
 
-                    if (mListener != null) {
-                        mListener.onScreencaptureReady(bmp);
+                            if (mListener != null) {
+                                mListener.onScreencaptureReady(bmp);
+                            }
+
+                            addLogEvent(OpenTokConfig.LOG_ACTION_SCREENCAPTURE, OpenTokConfig.LOG_VARIATION_SUCCESS);
+                        }
                     }
-
-                    addLogEvent(OpenTokConfig.LOG_ACTION_SCREENCAPTURE, OpenTokConfig.LOG_VARIATION_SUCCESS);
                 }
-            }
-        }
-        if (selected){
-            this.setVisibility(VISIBLE);
+                if (selected) {
+                    AnnotationsView.this.setVisibility(VISIBLE);
 
-            if (v.getId() == R.id.picker_color ){
-                mode = Mode.Color;
-                this.mToolbar.bringToFront();
-            }
-            else {
-                if (v.getId() == R.id.type_tool) {
-                    //type text
-                    mode = Mode.Text;
+                    if (v.getId() == R.id.picker_color) {
+                        mode = Mode.Color;
+                        AnnotationsView.this.mToolbar.bringToFront();
+                    } else {
+                        if (v.getId() == R.id.type_tool) {
+                            //type text
+                            mode = Mode.Text;
+                        }
+                        if (v.getId() == R.id.draw_freehand) {
+                            //freehand lines
+                            mode = Mode.Pen;
+                        }
+                    }
+                } else {
+                    mode = null;
                 }
-                if (v.getId() == R.id.draw_freehand) {
-                    //freehand lines
-                    mode = Mode.Pen;
+
+                if (!loaded) {
+                    resize();
+                    loaded = true;
                 }
-            }
-        }
-        else {
-            mode = null;
-        }
 
-        if (!loaded){
-            resize();
-            loaded = true;
-        }
-
-        if ( mode != null ) {
-            mListener.onAnnotationsSelected(mode);
-        }
+                if (mode != null) {
+                    mListener.onAnnotationsSelected(mode);
+                }
+            }});
     }
 
     @Override
@@ -1314,45 +1319,50 @@ public class AnnotationsView extends ViewGroup implements AnnotationsToolbar.Act
     }
 
     @Override
-    public void onSignalReceived(Session session, String type, String data, Connection connection) {
-        mType = type;
-        String mycid = session.getConnection().getConnectionId();
-        String cid = connection.getConnectionId();
+    public void onSignalReceived(final SignalInfo signalInfo, boolean isSelfSignal) {
+        Log.i(LOG_TAG, "Signal info: "+signalInfo.mSignalName);
+        ((Activity)mContext).runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
 
-        if (!cid.equals(mycid)) { // Ensure that we only handle signals from other users on the current canvas
-            if (type.contains(SIGNAL_TYPE)) {
-                this.setVisibility(VISIBLE);
-                if (!loaded){
-                    resize();
-                    loaded = true;
-                }
+                String cid = signalInfo.mSrcConnId;
+                String mycid = signalInfo.mDstConnId;
 
-                if (type.contains(Mode.Pen.toString())) {
-                    Log.i(LOG_TAG, "New pen annotations is received");
-                    penAnnotations(connection, data);
-                } else {
-                    if (type.equalsIgnoreCase(Mode.Clear.toString())) {
-                        Log.i(LOG_TAG, "New clear annotations is received");
-                        mode = Mode.Clear;
-                        clearCanvas(true, connection.getConnectionId());
+                if (!cid.equals(mycid)) { // Ensure that we only handle signals from other users on the current canvas
+                    Log.i(LOG_TAG, "Incoming annotation");
+                    AnnotationsView.this.setVisibility(VISIBLE);
+                    if (!loaded) {
+                        resize();
+                        loaded = true;
+                    }
+
+                    if (signalInfo.mSignalName != null && signalInfo.mSignalName.contains(Mode.Pen.toString())) {
+                        Log.i(LOG_TAG, "New pen annotations is received");
+                        penAnnotations(signalInfo.mSrcConnId, signalInfo.mData.toString());
                     } else {
-                        if (type.equalsIgnoreCase(Mode.Done.toString())) {
-                            Log.i(LOG_TAG, "New done annotations is received");
-                            mode = Mode.Done;
-                            clearAll(true, connection.getConnectionId());
+                        if (signalInfo.mSignalName.equalsIgnoreCase(Mode.Undo.toString())) {
+                            Log.i(LOG_TAG, "New undo annotations is received");
+                            mode = Mode.Undo;
+                            undoAnnotation(true, cid);
                         } else {
-                            if (type.equalsIgnoreCase(Mode.Text.toString())) {
-                                Log.i(LOG_TAG, "New text annotations is received");
-                                try {
-                                    textAnnotation(connection, data);
-                                }catch (Exception e) {
-                                    Log.e(LOG_TAG, e.toString());
+                            if (signalInfo.mSignalName.equalsIgnoreCase(Mode.Done.toString())) {
+                                Log.i(LOG_TAG, "New done annotations is received"); //todo done or clear?
+                                mode = Mode.Done;
+                                clearAll(true, cid);
+                            } else {
+                                if (signalInfo.mSignalName.equalsIgnoreCase(Mode.Text.toString())) {
+                                    Log.i(LOG_TAG, "New text annotations is received");
+                                    try {
+                                        textAnnotation(cid, signalInfo.mData.toString());
+                                    } catch (Exception e) {
+                                        Log.e(LOG_TAG, e.toString());
+                                    }
                                 }
                             }
                         }
                     }
                 }
-            }
-        }
+            }});
     }
+
 }
