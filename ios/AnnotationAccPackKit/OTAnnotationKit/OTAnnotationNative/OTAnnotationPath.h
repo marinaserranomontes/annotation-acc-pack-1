@@ -48,13 +48,18 @@
 @property (readonly, nonatomic) NSArray<OTAnnotationPoint *> *points;
 
 /**
+ *  An identifier for grouping a continuous annotation path object.
+ */
+@property (readonly, nonatomic) NSString *uuid;
+
+/**
  *  Initialize a path with given strokeColor.
  *
  *  @param strokeColor The stroke color of the newer path.
  *
  *  @return A new object of OTAnnotationPath.
  */
-+ (instancetype)pathWithStrokeColor:(UIColor *)strokeColor;
+- (instancetype)initWithStrokeColor:(UIColor *)strokeColor;
 
 /**
  *  Give the path a start point.
@@ -79,12 +84,21 @@
  *
  *  @return A new object of OTAnnotationPath.
  */
-+ (instancetype)pathWithPoints:(NSArray<OTAnnotationPoint *> *)points
+- (instancetype)initWithPoints:(NSArray<OTAnnotationPoint *> *)points
                    strokeColor:(UIColor *)strokeColor;
 
 /**
  *  Construct the path based on the current points array.
  */
 - (void)drawWholePath;
+
+@end
+
+@interface OTRemoteAnnotationPath : OTAnnotationPath
+
+@property (readonly, nonatomic) NSString *remoteGUID;
+
+- (instancetype)initWithStrokeColor:(UIColor *)strokeColor
+                         remoteGUID:(NSString *)remoteGUID;
 
 @end

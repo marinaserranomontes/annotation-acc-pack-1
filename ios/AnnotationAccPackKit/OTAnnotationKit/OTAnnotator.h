@@ -89,7 +89,7 @@ typedef void (^OTAnnotationDataReceivingBlock)(NSArray *data);
  *  @discussion This will be nil until OTAnnotationSessionDidConnect being signaled.
  *
  *  ******************************************************************************************
- *  The annotationScrollView.scrollView.contentSize is the critical data for remote annotation
+ *  The annotationScrollView.scrollView.contentSize is a critical data for remote annotation
  *  ******************************************************************************************
  */
 @property (readonly, nonatomic) OTAnnotationScrollView *annotationScrollView;

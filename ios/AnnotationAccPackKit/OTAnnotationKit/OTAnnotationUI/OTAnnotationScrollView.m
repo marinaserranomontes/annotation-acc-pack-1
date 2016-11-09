@@ -40,7 +40,6 @@
     }
     
     self.scrollView.scrollEnabled = !_annotatable;
-    [self.annotationView setUserInteractionEnabled:_annotatable];
 }
 
 - (instancetype)init {

@@ -38,27 +38,32 @@
     return [_mutablePoints copy];
 }
 
-+ (instancetype)pathWithStrokeColor:(UIColor *)strokeColor {
-    OTAnnotationPath *path = [[OTAnnotationPath alloc] init];
-    path.mutablePoints = [[NSMutableArray alloc] init];
-    path.strokeColor = strokeColor;
-    path.lineWidth = 3.0f;
-    return path;
+- (instancetype)initWithStrokeColor:(UIColor *)strokeColor {
+    
+    if (self = [super init]) {
+        _mutablePoints = [[NSMutableArray alloc] init];
+        _strokeColor = strokeColor;
+        _uuid = [NSUUID UUID].UUIDString;
+        self.lineWidth = 3.0f;
+    }
+    return self;
 }
 
-+ (instancetype)pathWithPoints:(NSArray<OTAnnotationPoint *> *)points
+- (instancetype)initWithPoints:(NSArray<OTAnnotationPoint *> *)points
                    strokeColor:(UIColor *)strokeColor {
-    OTAnnotationPath *path = [[OTAnnotationPath alloc] init];
-    path.mutablePoints = [[NSMutableArray alloc] initWithArray:points];
-    path.strokeColor = strokeColor;
-    path.lineWidth = 3.0f;
     
-    OTAnnotationPoint *startPoint = [points firstObject];
-    OTAnnotationPoint *endPoint = [points lastObject];
-    path.startPoint = CGPointMake(startPoint.x, startPoint.y);
-    path.endPoint = CGPointMake(endPoint.x, endPoint.y);
-    
-    return path;
+    if (self = [super init]) {
+        _mutablePoints = [[NSMutableArray alloc] initWithArray:points];
+        _strokeColor = strokeColor;
+        _uuid = [NSUUID UUID].UUIDString;
+        self.lineWidth = 3.0f;
+        
+        OTAnnotationPoint *startPoint = [points firstObject];
+        OTAnnotationPoint *endPoint = [points lastObject];
+        _startPoint = CGPointMake(startPoint.x, startPoint.y);
+        _endPoint = CGPointMake(endPoint.x, endPoint.y);
+    }
+    return self;
 }
 
 - (void)drawWholePath {
@@ -109,4 +114,22 @@
     [_mutablePoints addObject:touchPoint];
     _endPoint = [touchPoint cgPoint];
 }
+@end
+
+#pragma mark - OTRemoteAnnotationPath
+@interface OTRemoteAnnotationPath()
+@property (nonatomic) NSString *remoteGUID;
+@end
+
+@implementation OTRemoteAnnotationPath
+
+- (instancetype)initWithStrokeColor:(UIColor *)strokeColor
+                         remoteGUID:(NSString *)remoteGUID {
+    
+    if (self = [super initWithStrokeColor:strokeColor]) {
+        _remoteGUID = remoteGUID;
+    }
+    return self;
+}
+
 @end

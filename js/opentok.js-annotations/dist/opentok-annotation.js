@@ -1039,11 +1039,53 @@
       for (var i = drawHistory.length - 1; i >= 0; i--) {
         historyItem = drawHistory[i];
         if (historyItem.fromId === cid) {
+
+          if(historyItem.platform === 'ios') {
+            undoLastIos(incoming, cid, itemsToRemove);
+            break;
+          } 
+                
           endPoint = endPoint || historyItem.endPoint;
           removed = drawHistory.splice(i, 1)[0];
           removedItems.push(removed.guid);
           if (!endPoint || (endPoint && removed.startPoint === true)) {
             break;
+          }
+        }
+      }
+
+      if (incoming) {
+        updateHistory = updateHistory.filter(function (history) {
+          return !itemsToRemove.includes(history.guid);
+        });
+      } else {
+        eventHistory = eventHistory.filter(function (history) {
+          return !removedItems.includes(history.guid);
+        });
+
+        self.session.signal({
+          type: 'otAnnotation_undo',
+          data: JSON.stringify(removedItems)
+        });
+      }
+
+      draw();
+    }
+
+    var undoLastIos = function (incoming, cid, itemsToRemove) {
+
+      var historyItem;
+      var removed;
+      var endPoint = false;
+      var removedItems = [];
+      
+     
+      for (var i = drawHistory.length - 1; i >= 0; i--) {
+        historyItem = drawHistory[i];
+        if (historyItem.fromId === cid) {
+          if(historyItem.guid === itemsToRemove[0]) {
+            removed = drawHistory.splice(i, 1)[0];
+            removedItems.push(removed.guid);
           }
         }
       }

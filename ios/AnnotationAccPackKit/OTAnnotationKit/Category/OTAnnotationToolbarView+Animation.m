@@ -11,13 +11,13 @@
 @implementation OTAnnotationToolbarView (Animation)
 
 - (void)moveSelectionShadowViewTo:(UIButton *)sender {
-    
-    [self setUserInteractionEnabled:NO];
+
     if (![sender isKindOfClass:[UIButton class]]) {
         [self.selectionShadowView removeFromSuperview];
         return;
     }
     
+    [self setUserInteractionEnabled:NO];
     CGRect holderViewFrame = sender.superview.frame;
     CGRect hodlerViewBounds = sender.superview.bounds;
     self.selectionShadowView.frame = CGRectMake(holderViewFrame.origin.x, holderViewFrame.origin.y, CGRectGetWidth(hodlerViewBounds), CGRectGetHeight(hodlerViewBounds));

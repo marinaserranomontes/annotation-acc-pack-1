@@ -12,13 +12,19 @@
 
 #import "Constants.h"
 
-@interface OTAnnotationView()
+@interface OTAnnotationView() {
+    UIColor *previousStrokeColor;   // this is for memorizing the previous stroke color
+}
 @property (nonatomic) OTAnnotationTextView *currentEditingTextView;
 @property (nonatomic) OTAnnotationPath *currentDrawPath;
 @property (nonatomic) OTAnnotationDataManager *annotationDataManager;
 @end
 
 @implementation OTAnnotationView
+
+- (instancetype)init {
+    return [[OTAnnotationView alloc] initWithFrame:CGRectZero];
+}
 
 - (instancetype)initWithFrame:(CGRect)frame {
     
@@ -56,7 +62,7 @@
         return;
     }
     
-    if ([annotatable isMemberOfClass:[OTAnnotationPath class]]) {
+    if ([annotatable isKindOfClass:[OTAnnotationPath class]]) {
         OTAnnotationPath *path = (OTAnnotationPath *)annotatable;
         if (path.points.count != 0) {
             [path drawWholePath];
@@ -64,7 +70,7 @@
         [self.annotationDataManager addAnnotatable:path];
         [self setNeedsDisplay];
     }
-    else if ([annotatable isMemberOfClass:[OTAnnotationTextView class]]) {
+    else if ([annotatable isKindOfClass:[OTAnnotationTextView class]]) {
         
         OTAnnotationTextView *textfield = (OTAnnotationTextView *)annotatable;
         [self addSubview:textfield];
@@ -72,27 +78,74 @@
     }
 }
 
-- (void)undoAnnotatable {
+- (id<OTAnnotatable>)undoAnnotatable {
     
     id<OTAnnotatable> annotatable = [self.annotationDataManager peakOfAnnotatable];
     if ([annotatable isMemberOfClass:[OTAnnotationPath class]]) {
-        [self.annotationDataManager pop];
+        id<OTAnnotatable> annotatableToRemove = [self.annotationDataManager pop];
         [self setNeedsDisplay];
         [[AnnLoggingWrapper sharedInstance].logger logEventAction:KLogActionErase variation:KLogVariationSuccess completion:nil];
+        return annotatableToRemove;
     }
     else if ([annotatable isMemberOfClass:[OTAnnotationTextView class]]) {
         [self.annotationDataManager pop];
         OTAnnotationTextView *textfield = (OTAnnotationTextView *)annotatable;
         [textfield removeFromSuperview];
         [[AnnLoggingWrapper sharedInstance].logger logEventAction:KLogActionErase variation:KLogVariationSuccess completion:nil];
+        return textfield;
     }
+    return nil;
+}
+
+- (void)removeRemoteAnnotatableWithGUID:(NSString *)guid {
+    
+    OTRemoteAnnotationPath *pathToRemove;
+    for (id annotatable in self.annotationDataManager.annotatable) {
+        if ([annotatable isMemberOfClass:[OTRemoteAnnotationPath class]]) {
+            OTRemoteAnnotationPath *path = (OTRemoteAnnotationPath *)annotatable;
+            if ([path.remoteGUID isEqualToString:guid]) {
+                pathToRemove = path;
+                break;
+            }
+        }
+    }
+    
+    [self.annotationDataManager remove:pathToRemove];
+    [self setNeedsDisplay];
+    [[AnnLoggingWrapper sharedInstance].logger logEventAction:KLogActionErase variation:KLogVariationSuccess completion:nil];
+}
+
+- (id<OTAnnotatable>)undoRemoteAnnotatable {
+    
+    id<OTAnnotatable> annotatable = [self.annotationDataManager peakOfRemoteAnnotatable];
+    if ([annotatable isMemberOfClass:[OTRemoteAnnotationPath class]]) {
+        id<OTAnnotatable> annotatableToRemove = [self.annotationDataManager popRemote];
+        [self setNeedsDisplay];
+        [[AnnLoggingWrapper sharedInstance].logger logEventAction:KLogActionErase variation:KLogVariationSuccess completion:nil];
+        return annotatableToRemove;
+    }
+    else if ([annotatable isMemberOfClass:[OTRemoteAnnotationTextView class]]) {
+        [self.annotationDataManager popRemote];
+        OTAnnotationTextView *textfield = (OTAnnotationTextView *)annotatable;
+        [textfield removeFromSuperview];
+        [[AnnLoggingWrapper sharedInstance].logger logEventAction:KLogActionErase variation:KLogVariationSuccess completion:nil];
+        return textfield;
+    }
+    return nil;
 }
 
 - (void)removeAllAnnotatables {
     
     [self.annotationDataManager popAll];
     [self setNeedsDisplay];
-    [[AnnLoggingWrapper sharedInstance].logger logEventAction:KLogActionErase variation:KLogVariationSuccess completion:nil];
+    [[AnnLoggingWrapper sharedInstance].logger logEventAction:KLogActionEraseAll variation:KLogVariationSuccess completion:nil];
+}
+
+- (void)removeAllRemoteAnnotatables {
+    
+    [self.annotationDataManager popRemoteAll];
+    [self setNeedsDisplay];
+    [[AnnLoggingWrapper sharedInstance].logger logEventAction:KLogActionEraseAll variation:KLogVariationSuccess completion:nil];
 }
 
 - (void)commitCurrentAnnotatable {
@@ -101,6 +154,7 @@
         [self.currentAnnotatable commit];
     }
     _currentAnnotatable = nil;
+    previousStrokeColor = _currentDrawPath.strokeColor;
     _currentDrawPath = nil;
     _currentEditingTextView = nil;
 }
@@ -136,7 +190,7 @@
 - (void)drawRect:(CGRect)rect {
     [self.annotationDataManager.annotatable enumerateObjectsUsingBlock:^(id<OTAnnotatable> annotatable, NSUInteger idx, BOOL *stop) {
         
-        if ([annotatable isMemberOfClass:[OTAnnotationPath class]]) {
+        if ([annotatable isKindOfClass:[OTAnnotationPath class]]) {
             OTAnnotationPath *path = (OTAnnotationPath *)annotatable;
             [path.strokeColor setStroke];
             [path stroke];
@@ -150,7 +204,13 @@
     if (_currentEditingTextView) return;
     
     if (!_currentDrawPath || _currentDrawPath.points.count != 0) {
-        self.currentAnnotatable = [OTAnnotationPath pathWithStrokeColor:_currentDrawPath.strokeColor];
+        
+        if (_currentDrawPath.strokeColor) {
+            self.currentAnnotatable = [[OTAnnotationPath alloc] initWithStrokeColor:_currentDrawPath.strokeColor];
+        }
+        else if (previousStrokeColor) {
+            self.currentAnnotatable = [[OTAnnotationPath alloc] initWithStrokeColor:previousStrokeColor];
+        }
     }
     UITouch *touch = [touches anyObject];
     

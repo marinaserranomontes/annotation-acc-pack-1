@@ -62,7 +62,7 @@
                                            
                                              // configure annotation feature
                                              self.annotator.annotationScrollView.annotatable = YES;
-                                             self.annotator.annotationScrollView.annotationView.currentAnnotatable = [OTAnnotationPath pathWithStrokeColor:[UIColor yellowColor]];
+                                             self.annotator.annotationScrollView.annotationView.currentAnnotatable = [[OTAnnotationPath alloc] initWithStrokeColor:[UIColor yellowColor]];
                                          }
                                      }];
                                      
