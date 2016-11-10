@@ -72,6 +72,13 @@
 - (void)removeRemoteAnnotatableWithGUID:(NSString *)guid;
 
 /**
+ *  Erase the last remote text annotatable object.
+ *
+ */
+- (void)removeRemoteTextAnnotatable;
+
+
+/**
  *  Clear all annotatable objects from the annotation view
  */
 - (void)removeAllAnnotatables;

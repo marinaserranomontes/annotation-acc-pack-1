@@ -115,6 +115,27 @@
     [[AnnLoggingWrapper sharedInstance].logger logEventAction:KLogActionErase variation:KLogVariationSuccess completion:nil];
 }
 
+- (void)removeRemoteTextAnnotatable {
+    NSUInteger cnt = [self.annotationDataManager.annotatable count];
+    OTRemoteAnnotationTextView *textToRemove;
+    
+    for(unsigned i=cnt-1; i>= 0; i--)
+    {
+        id<OTAnnotatable> annotatable = [self.annotationDataManager.annotatable objectAtIndex:i];
+        if ([annotatable isMemberOfClass:[OTRemoteAnnotationTextView class]]) {
+            OTRemoteAnnotationTextView *textView = (OTRemoteAnnotationTextView *)annotatable;
+            textToRemove = textView;
+            [textView removeFromSuperview];
+            break;
+        }
+    }
+    
+    [self.annotationDataManager remove:textToRemove];
+    [self setNeedsDisplay];
+    [[AnnLoggingWrapper sharedInstance].logger logEventAction:KLogActionErase variation:KLogVariationSuccess completion:nil];
+    
+}
+
 - (id<OTAnnotatable>)undoRemoteAnnotatable {
     
     id<OTAnnotatable> annotatable = [self.annotationDataManager peakOfRemoteAnnotatable];
