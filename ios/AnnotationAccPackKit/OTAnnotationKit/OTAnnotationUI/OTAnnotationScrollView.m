@@ -132,6 +132,13 @@
     [[AnnLoggingWrapper sharedInstance].logger logEventAction:KLogActionUseToolbar variation:KLogVariationSuccess completion:nil];
 }
 
+- (void)initializeUniversalToolbarView {
+    CGRect mainBounds = [UIScreen mainScreen].bounds;
+    self.toolbarView = [[OTAnnotationToolbarView alloc] initUniversalWithFrame:CGRectMake(0, 0, CGRectGetWidth(mainBounds), DefaultToolbarHeight)
+                                                          annotationScrollView:self];
+    [[AnnLoggingWrapper sharedInstance].logger logEventAction:KLogActionUseToolbar variation:KLogVariationSuccess completion:nil];
+}
+
 - (void)addTextAnnotation:(OTAnnotationTextView *)annotationTextView {
     annotationTextView.frame = CGRectMake(self.scrollView.contentOffset.x + LeadingPaddingOfAnnotationTextView,
                                           self.scrollView.contentOffset.y + annotationTextView.frame.origin.y,

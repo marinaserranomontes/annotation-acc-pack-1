@@ -82,6 +82,7 @@
     self.annotationScrollView = [[OTAnnotationScrollView alloc] init];
     self.annotationScrollView.scrollView.contentSize = self.annotationScrollView.bounds.size;
     self.annotationScrollView.annotationView.annotationViewDelegate = self;
+    [self.annotationScrollView initializeToolbarView];
     [self notifiyAllWithSignal:OTAnnotationSessionDidConnect
                          error:nil];
 }
@@ -283,7 +284,7 @@ receivedSignalType:(NSString*)type
                            @"platform": @"ios",
                            @"text": textView.text,
                            @"color": [UIColor hexStringFromColor:textView.textColor],
-                           @"font": [NSString stringWithFormat:@"%@px Arial", @(textView.font.pointSize)]
+                           @"font": [NSString stringWithFormat:@"%@px Arial", @(textView.font.pointSize * [UIScreen mainScreen].scale)]
                            };
     NSError *error;
     NSString *jsonString = [JSON stringify:@[data]];
@@ -572,7 +573,7 @@ receivedSignalType:(NSString*)type
             signalingPoint[@"videoHeight"] = @(latestScreenShareStream.videoDimensions.height);
             signalingPoint[@"canvasWidth"] = @(self.annotationScrollView.scrollView.contentSize.width);
             signalingPoint[@"canvasHeight"] = @(self.annotationScrollView.scrollView.contentSize.height);
-            signalingPoint[@"lineWidth"] = @(3);
+            signalingPoint[@"lineWidth"] = @(path.lineWidth * [UIScreen mainScreen].scale);
             signalingPoint[@"mirrored"] = @(NO);
             signalingPoint[@"guid"] = path.uuid;
             signalingPoint[@"smoothed"] = @(YES);    // this is to enable drawing smoothly

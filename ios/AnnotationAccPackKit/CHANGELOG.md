@@ -4,6 +4,25 @@ The changelog for `screensharing-annotation-acc-pack` iOS.
 
 --------------------------------------
 
+1.1.7
+-----
+
+### Enhancements
+
+- Add clear action.
+- Add erase and clear action for remote annotation.
+- Enhance text annotation for local and remote.
+
+### Fixes
+
+- Fix minor bugs
+
+1.1.6
+-----
+
+### DEPRECATED 
+
+
 1.1.5
 -----
 

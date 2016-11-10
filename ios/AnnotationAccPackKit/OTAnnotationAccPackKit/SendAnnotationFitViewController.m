@@ -58,7 +58,7 @@
                                              [self.annotator.annotationScrollView addContentView:self.sharer.subscriberView];
                                              [self.shareView addSubview:self.annotator.annotationScrollView];
                                              
-                                             [self.annotator.annotationScrollView initializeToolbarView];
+                                             [self.annotator.annotationScrollView initializeUniversalToolbarView];
                                              self.annotator.annotationScrollView.toolbarView.toolbarViewDataSource = self;
                                              
                                              // using frame and self.view to contain toolbarView is for having more space to interact with color picker

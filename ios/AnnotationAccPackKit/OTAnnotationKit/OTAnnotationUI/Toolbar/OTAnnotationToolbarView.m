@@ -78,7 +78,10 @@ NSString * const kOTAnnotationToolbarDidAddTextAnnotation = @"kOTAnnotationToolb
 
 #import "OTAnnotationToolbarView_Private.h"
 
-@interface OTAnnotationToolbarView() <OTAnnotationColorPickerViewProtocol, OTAnnotationEditTextViewProtocol>
+@interface OTAnnotationToolbarView() <OTAnnotationColorPickerViewProtocol, OTAnnotationEditTextViewProtocol> {
+    
+    BOOL isUniversal;
+}
 @property (nonatomic) LHToolbar *toolbar;
 @property (weak, nonatomic) OTAnnotationScrollView *annotationScrollView;
 
@@ -184,6 +187,15 @@ NSString * const kOTAnnotationToolbarDidAddTextAnnotation = @"kOTAnnotationToolb
     return self;
 }
 
+- (instancetype)initUniversalWithFrame:(CGRect)frame
+                  annotationScrollView:(OTAnnotationScrollView *)annotationScrollView{
+    
+    OTAnnotationToolbarView *toolbarView = [self initWithFrame:frame annotationScrollView:annotationScrollView];
+    if (!toolbarView) return  nil;
+    isUniversal = YES;
+    return toolbarView;
+}
+
 - (void)dealloc {
     
     [[NSNotificationCenter defaultCenter] removeObserver:OTAnnotationTextViewDidCancelChangeNotification];
@@ -194,6 +206,18 @@ NSString * const kOTAnnotationToolbarDidAddTextAnnotation = @"kOTAnnotationToolb
         self.annotationScrollView.annotatable = NO;
         [self.colorPickerView removeFromSuperview];
     }
+}
+
+- (void)done {
+    if ([self.annotationScrollView.annotationView.currentAnnotatable isMemberOfClass:[OTAnnotationTextView class]]) {
+        [[NSNotificationCenter defaultCenter] postNotificationName:kOTAnnotationToolbarDidAddTextAnnotation object:self.annotationScrollView.annotationView.currentAnnotatable];
+    }
+    self.annotationScrollView.annotatable = NO;
+    [self dismissColorPickerView];
+    [self.toolbar removeContentViewAtIndex:0];
+    [self moveSelectionShadowViewTo:nil];
+    [self resetToolbarButtons];
+    [[AnnLoggingWrapper sharedInstance].logger logEventAction:KLogActionDone variation:KLogVariationSuccess completion:nil];
 }
 
 - (void)configureToolbarButtons {
@@ -236,15 +260,7 @@ NSString * const kOTAnnotationToolbarDidAddTextAnnotation = @"kOTAnnotationToolb
 - (void)toolbarButtonPressed:(UIButton *)sender {
     
     if (sender == self.doneButton) {
-        if ([self.annotationScrollView.annotationView.currentAnnotatable isMemberOfClass:[OTAnnotationTextView class]]) {
-            [[NSNotificationCenter defaultCenter] postNotificationName:kOTAnnotationToolbarDidAddTextAnnotation object:self.annotationScrollView.annotationView.currentAnnotatable];
-        }
-        self.annotationScrollView.annotatable = NO;
-        [self dismissColorPickerView];
-        [self.toolbar removeContentViewAtIndex:0];
-        [self moveSelectionShadowViewTo:nil];
-        [self resetToolbarButtons];
-        [[AnnLoggingWrapper sharedInstance].logger logEventAction:KLogActionDone variation:KLogVariationSuccess completion:nil];
+        [self done];
     }
     else if (sender == self.annotateButton) {
         self.annotationScrollView.annotatable = YES;
@@ -256,40 +272,21 @@ NSString * const kOTAnnotationToolbarDidAddTextAnnotation = @"kOTAnnotationToolb
     }
     else if (sender == self.textButton) {
     
-        UIAlertController *editTextAlertController = [UIAlertController alertControllerWithTitle:nil message:nil preferredStyle:UIAlertControllerStyleActionSheet];
+        self.annotationScrollView.annotatable = YES;
+        [self dismissColorPickerView];
+        [self.toolbar insertContentView:self.doneButton atIndex:0];
         
-        [editTextAlertController addAction:[UIAlertAction actionWithTitle:@"Local Text Annotation" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
-            
-            self.annotationScrollView.annotatable = YES;
-            [self dismissColorPickerView];
-            [self.toolbar insertContentView:self.doneButton atIndex:0];
-            
-            OTAnnotationEditTextViewController *editTextViewController = [[OTAnnotationEditTextViewController alloc] initWithTextColor:self.colorButton.backgroundColor];
-            editTextViewController.delegate = self;
-            [editTextAlertController dismissViewControllerAnimated:YES completion:nil];
-            UIViewController *topViewController = [UIViewController topViewControllerWithRootViewController];
-            [topViewController presentViewController:editTextViewController animated:YES completion:nil];
-            [self disableButtons:@[self.annotateButton, self.textButton, self.screenshotButton, self.eraseButton, self.eraseAllButton]];
-        }]];
-        
-        [editTextAlertController addAction:[UIAlertAction actionWithTitle:@"Remote Text Annotation" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
-            
-            self.annotationScrollView.annotatable = YES;
-            [self dismissColorPickerView];
-            [self.toolbar insertContentView:self.doneButton atIndex:0];
-            
-            OTAnnotationEditTextViewController *editTextViewController = [[OTAnnotationEditTextViewController alloc] initRemoteWithTextColor:self.colorButton.backgroundColor];
-            editTextViewController.delegate = self;
-            [editTextAlertController dismissViewControllerAnimated:YES completion:nil];
-            UIViewController *topViewController = [UIViewController topViewControllerWithRootViewController];
-            [topViewController presentViewController:editTextViewController animated:YES completion:nil];
-            [self disableButtons:@[self.annotateButton, self.textButton, self.screenshotButton, self.eraseButton, self.eraseAllButton]];
-        }]];
-        
-        [editTextAlertController addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleDestructive handler:nil]];
-        
+        OTAnnotationEditTextViewController *editTextViewController;
+        if (!isUniversal) {
+            editTextViewController = [[OTAnnotationEditTextViewController alloc] initWithTextColor:self.colorButton.backgroundColor];
+        }
+        else {
+            editTextViewController = [[OTAnnotationEditTextViewController alloc] initRemoteWithTextColor:self.colorButton.backgroundColor];
+        }
+        editTextViewController.delegate = self;
         UIViewController *topViewController = [UIViewController topViewControllerWithRootViewController];
-        [topViewController presentViewController:editTextAlertController animated:YES completion:nil];
+        [topViewController presentViewController:editTextViewController animated:YES completion:nil];
+        [self disableButtons:@[self.annotateButton, self.textButton, self.screenshotButton, self.eraseButton, self.eraseAllButton]];
     }
     else if (sender == self.colorButton) {
         [self showColorPickerView];
@@ -303,6 +300,10 @@ NSString * const kOTAnnotationToolbarDidAddTextAnnotation = @"kOTAnnotationToolb
         [[NSNotificationCenter defaultCenter] postNotificationName:kOTAnnotationToolbarDidPressCleanButton object:nil];
     }
     else if (sender == self.screenshotButton) {
+        
+        [self dismissColorPickerView];
+        [self moveSelectionShadowViewTo:nil];
+        
         if (self.toolbarViewDataSource) {
             self.captureViewController.sharedImage = [self.annotationScrollView.annotationView captureScreenWithView:[self.toolbarViewDataSource annotationToolbarViewForRootViewForScreenShot:self]];
         }
@@ -348,7 +349,7 @@ NSString * const kOTAnnotationToolbarDidAddTextAnnotation = @"kOTAnnotationToolb
         [self.annotationScrollView addTextAnnotation:annotationTextView];
     }
     else {
-        [self toolbarButtonPressed:self.doneButton];
+        [self done];
     }
 }
 

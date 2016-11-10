@@ -44,7 +44,7 @@
         _mutablePoints = [[NSMutableArray alloc] init];
         _strokeColor = strokeColor;
         _uuid = [NSUUID UUID].UUIDString;
-        self.lineWidth = 3.0f;
+        self.lineWidth = 2.0f;
     }
     return self;
 }
@@ -56,7 +56,7 @@
         _mutablePoints = [[NSMutableArray alloc] initWithArray:points];
         _strokeColor = strokeColor;
         _uuid = [NSUUID UUID].UUIDString;
-        self.lineWidth = 3.0f;
+        self.lineWidth = 2.0f;
         
         OTAnnotationPoint *startPoint = [points firstObject];
         OTAnnotationPoint *endPoint = [points lastObject];
