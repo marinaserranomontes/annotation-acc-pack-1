@@ -163,8 +163,17 @@ receivedSignalType:(NSString*)type
         }
         
         if ([type isEqualToString:@"otAnnotation_undo"]) {
+            
             for (NSString *guid in jsonArray) {
-                [self.annotationScrollView.annotationView removeRemoteAnnotatableWithGUID:guid];
+                if ([guid isEqual: [NSNull null]]){
+                    
+                    //remove the last remote text annotation
+                    [self.annotationScrollView.annotationView removeRemoteTextAnnotatable];
+                }
+                else {
+                    //remove the last remote path annotation
+                    [self.annotationScrollView.annotationView removeRemoteAnnotatableWithGUID:guid];
+                }
             }
             return;
         }
