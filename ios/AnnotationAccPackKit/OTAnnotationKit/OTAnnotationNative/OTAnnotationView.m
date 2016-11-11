@@ -99,19 +99,32 @@
 
 - (void)removeRemoteAnnotatableWithGUID:(NSString *)guid {
     
-    OTRemoteAnnotationPath *pathToRemove;
-    for (id annotatable in self.annotationDataManager.annotatable) {
-        if ([annotatable isMemberOfClass:[OTRemoteAnnotationPath class]]) {
-            OTRemoteAnnotationPath *path = (OTRemoteAnnotationPath *)annotatable;
-            if ([path.remoteGUID isEqualToString:guid]) {
-                pathToRemove = path;
-                break;
+    __block id<OTAnnotatable> annotationToRemove;
+    
+    [self.annotationDataManager.annotatable enumerateObjectsWithOptions:NSEnumerationReverse usingBlock:^(id<OTAnnotatable>  _Nonnull annotatable, NSUInteger idx, BOOL * _Nonnull stop) {
+        if (guid) {
+            if ([annotatable isMemberOfClass:[OTRemoteAnnotationPath class]]) {
+                OTRemoteAnnotationPath *path = (OTRemoteAnnotationPath *)annotatable;
+                if ([path.remoteGUID isEqualToString:guid]) {
+                    annotationToRemove = path;
+                    *stop = YES;
+                }
             }
         }
+        else {
+            if ([annotatable isMemberOfClass:[OTRemoteAnnotationTextView class]]) {
+                OTRemoteAnnotationTextView *textView = (OTRemoteAnnotationTextView *)annotatable;
+                annotationToRemove = textView;
+                [textView removeFromSuperview];
+                *stop = YES;
+            }
+        }
+    }];
+
+    [self.annotationDataManager remove:annotationToRemove];
+    if (guid) {
+        [self setNeedsDisplay];
     }
-    
-    [self.annotationDataManager remove:pathToRemove];
-    [self setNeedsDisplay];
     [[AnnLoggingWrapper sharedInstance].logger logEventAction:KLogActionErase variation:KLogVariationSuccess completion:nil];
 }
 

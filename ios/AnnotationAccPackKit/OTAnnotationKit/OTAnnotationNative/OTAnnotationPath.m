@@ -94,6 +94,16 @@
     [self addPoint:point];
 }
 
+- (void)moveSmoothTo:(OTAnnotationPoint*)toThePoint  from:(OTAnnotationPoint*)fromThePoint {
+    
+    CGPoint fromPoint = [fromThePoint cgPoint];
+    CGPoint toPoint = [toThePoint cgPoint];
+    CGPoint controlPoint = CGPointMake((fromPoint.x + toPoint.x) / 2, (fromPoint.y + toPoint.y) / 2);
+    
+    [self moveToPoint: CGPointMake((toPoint.x + fromPoint.x) / 2, (toPoint.y + fromPoint.y) / 2)];
+    [self addPoint:toThePoint];
+}
+
 - (void)drawCurveTo:(OTAnnotationPoint*)toThePoint  from:(OTAnnotationPoint*)fromThePoint{
     
     CGPoint fromPoint = [fromThePoint cgPoint];
@@ -103,7 +113,6 @@
     [self addQuadCurveToPoint:controlPoint controlPoint:fromPoint];
     
     [self addPoint:toThePoint];
-
 }
 
 #pragma mark - private method

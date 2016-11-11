@@ -121,11 +121,11 @@
     for (id annotatable in _mutableAnnotatable) {
         if ([annotatable isMemberOfClass:[OTAnnotationPath class]] || [annotatable isMemberOfClass:[OTAnnotationTextView class]]) {
             [objectsToRemove addObject:annotatable];
-        }
-        
-        if ([annotatable isMemberOfClass:[OTAnnotationTextView class]]) {
-            OTAnnotationTextView *textView = (OTAnnotationTextView *)annotatable;
-            [textView removeFromSuperview];
+            
+            if ([annotatable isMemberOfClass:[OTAnnotationTextView class]]) {
+                OTAnnotationTextView *textView = (OTAnnotationTextView *)annotatable;
+                [textView removeFromSuperview];
+            }
         }
     }
     [_mutableAnnotatable removeObjectsInArray:objectsToRemove];
@@ -140,11 +140,11 @@
     for (id annotatable in _mutableAnnotatable) {
         if ([annotatable isMemberOfClass:[OTRemoteAnnotationPath class]] || [annotatable isMemberOfClass:[OTRemoteAnnotationTextView class]]) {
             [objectsToRemove addObject:annotatable];
-        }
-        
-        if ([annotatable isMemberOfClass:[OTRemoteAnnotationTextView class]]) {
-            OTRemoteAnnotationTextView *textView = (OTRemoteAnnotationTextView *)annotatable;
-            [textView removeFromSuperview];
+            
+            if ([annotatable isMemberOfClass:[OTRemoteAnnotationTextView class]]) {
+                OTRemoteAnnotationTextView *textView = (OTRemoteAnnotationTextView *)annotatable;
+                [textView removeFromSuperview];
+            }
         }
     }
     

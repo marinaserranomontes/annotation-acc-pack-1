@@ -4,6 +4,18 @@ The changelog for `screensharing-annotation-acc-pack` iOS.
 
 --------------------------------------
 
+1.1.9
+-----
+
+### Fixes
+
+- Fix a bug that it's unable to remove text annotation.
+
+1.1.8
+-----
+
+### DEPRECATED 
+
 1.1.7
 -----
 
