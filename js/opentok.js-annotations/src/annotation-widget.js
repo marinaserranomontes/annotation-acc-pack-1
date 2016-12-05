@@ -1058,7 +1058,7 @@
         historyItem = drawHistory[i];
         if (historyItem.fromId === cid) {
 
-          if(historyItem.platform === 'ios' && itemsToRemove != null && itemsToRemove.length > 0 && itemsToRemove[0] != null) {
+          if(historyItem.platform === 'ios' && !!itemsToRemove && !!itemsToRemove.length && itemsToRemove[0] !== null) {
             undoLastIos(incoming, cid, itemsToRemove);
             break;
           } 
