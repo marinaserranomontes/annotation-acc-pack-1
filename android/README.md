@@ -1,6 +1,6 @@
 ![logo](../tokbox-logo.png)
 
-# OpenTok Annotations Accelerator Pack for Android<br/>Version 1.1
+# OpenTok Annotations Accelerator Pack for Android<br/>Version 2.0.0
 
 ## Quick start
 
@@ -38,13 +38,13 @@ There are 3 options for installing the OpenTok Annotations Accelerator Pack libr
 2. Add the following code snippet to the section labeled 'dependencies’:
 
   ```
-  compile 'com.opentok.android:opentok-annotations:1.1.0’
+  compile 'com.opentok.android:opentok-annotations:2.0.0’
   ```
 
 ### Downloading and Installing the AAR File
 
-1.  Download the [OpenTok Annotations Accelerator Pack zip file](https://s3.amazonaws.com/artifact.tokbox.com/solution/rel/annotations/android/opentok-annotations-1.1.0.zip) containing the AAR file and documentation,
-1. Extract the **opentok-annotations-1.1.0.aar** file.
+1.  Download the [OpenTok Annotations Accelerator Pack zip file](https://s3.amazonaws.com/artifact.tokbox.com/solution/rel/annotations/android/opentok-annotations-2.0.0.zip) containing the AAR file and documentation,
+1. Extract the **opentok-annotations-2.0.0.aar** file.
 2.  Right-click the app name, select **Open Module Settings**, and click **+**.
 3.  Select **Import .JAR/.AAR Package** and click **Next**.
 4.  Browse to the **Annotations Accelerator Pack library AAR** and click **Finish**.
@@ -112,7 +112,7 @@ You can attach an annotation canvas to a publisher or subscriber view:
 
 ```java
 try {
-  AnnotationsView annotationsView = new AnnotationsView(this, mComm.getSession(), OpenTokConfig.API_KEY, mComm.getRemote());
+  AnnotationsView annotationsView = new AnnotationsView(this, sdkWrapper, OpenTokConfig.API_KEY, mComm.getRemote());
   annotationsView.attachToolbar(mAnnotationsToolbar);
   previewContainer.addView(annotationsView);
           
@@ -168,3 +168,4 @@ To develop an application that uses the OpenTok Annotations Accelerator Pack for
 
   1. Install [Android Studio](http://developer.android.com/intl/es/sdk/index.html).
   2. Review the [OpenTok Android SDK Requirements](https://tokbox.com/developer/sdks/android/#developerandclientrequirements).
+  3. Review the [OpenTok Android SDK Wrapper](https://github.com/opentok/acc-pack-common/tree/master/android).
