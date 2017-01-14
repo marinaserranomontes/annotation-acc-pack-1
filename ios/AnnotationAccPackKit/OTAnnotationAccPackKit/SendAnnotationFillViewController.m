@@ -33,17 +33,17 @@
     
     self.sharer = [[OTScreenSharer alloc] init];
     self.sharer.dataSource = self;
-    self.sharer.subscriberVideoContentMode = OTScreenShareVideoViewFill;
+    self.sharer.subscriberVideoContentMode = OTVideoViewFit;
     [self.sharer connectWithView:nil
-                         handler:^(OTScreenShareSignal signal, NSError *error) {
+                         handler:^(OTCommunicationSignal signal, NSError *error) {
                              
                              if (!error) {
                                  
-                                 if (signal == OTScreenSharePublisherCreated) {
+                                 if (signal == OTPublisherCreated) {
                                      self.sharer.publishAudio = NO;
                                      self.sharer.subscribeToAudio = NO;
                                  }
-                                 else if (signal == OTScreenShareSubscriberCreated) {
+                                 else if (signal == OTSubscriberReady) {
                                      
                                      [self.sharer.subscriberView removeFromSuperview];
                                      self.sharer.subscriberView.frame = CGRectMake(0, 0, self.sharer.subscriberVideoDimension.width, self.sharer.subscriberVideoDimension.height);

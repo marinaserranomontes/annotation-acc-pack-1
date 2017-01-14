@@ -34,11 +34,11 @@
     self.sharer = [[OTScreenSharer alloc] init];
     self.sharer.dataSource = self;
     [self.sharer connectWithView:self.shareView
-                         handler:^(OTScreenShareSignal signal, NSError *error) {
+                         handler:^(OTCommunicationSignal signal, NSError *error) {
                              
                              if (!error) {
                                  
-                                 if (signal == OTScreenSharePublisherCreated) {
+                                 if (signal == OTPublisherCreated) {
                                      self.sharer.publishAudio = NO;
                                      self.sharer.subscribeToAudio = NO;
                                      

@@ -34,11 +34,11 @@
     self.sharer = [[OTScreenSharer alloc] init];
     self.sharer.dataSource = self;
     [self.sharer connectWithView:self.yellowView
-                         handler:^(OTScreenShareSignal signal, NSError *error) {
+                         handler:^(OTCommunicationSignal signal, NSError *error) {
                              
                              if (!error) {
                                  
-                                 if (signal == OTScreenShareSubscriberCreated) {
+                                 if (signal == OTSubscriberReady) {
                                      self.sharer.publishAudio = NO;
                                      self.sharer.subscribeToAudio = NO;
                                      self.annotator = [[OTAnnotator alloc] init];
