@@ -350,7 +350,7 @@
         ctxCopy.drawImage(canvas, 0, 0);
 
         cbs.forEach(function (cb) {
-          var data = { src: canvasCopy.toDataURL(), isAnnotationEnd: isAnnotationEnd };
+          var data = {src: canvasCopy.toDataURL(), isAnnotationEnd: isAnnotationEnd};
           cb.call(self, data);
         });
 
@@ -550,7 +550,7 @@
                     color: resizeEvent ? event.userColor : self.userColor,
                     lineWidth: resizeEvent ? event.lineWidth : shapeLineWidth,
                     selectedItem: selectedItem
-                      // INFO The points for scaling will get added when drawing is complete
+                    // INFO The points for scaling will get added when drawing is complete
                   };
 
                   draw(new VideoRelativeCoordinateSet(update), true);
@@ -702,6 +702,9 @@
      */
     var textEvent;
     var textInputId = 'textAnnotation';
+    var commitPopId = 'commitTextPop';
+    var commitPopClickId = 'comfirm-btn';
+    var dismissPopId = 'dismiss-btn';
     var ignoreClicks = false;
     var handleClick = function (event) {
 
@@ -721,31 +724,6 @@
     };
 
 
-    // Listen for keydown on 'Enter' once the text input is appended
-    var handleKeyDown = function (event) {
-
-      // Enter
-      if (event.which === 13) {
-        processTextEvent();
-      }
-      // Escape
-      if (event.which === 27) {
-        context.getElementById(textInputId).remove();
-        textEvent = null;
-      }
-
-      ignoreClicks = false;
-
-    };
-
-    var addKeyDownListener = function () {
-      context.addEventListener('keydown', handleKeyDown);
-    };
-
-    var removeKeyDownListener = function () {
-      context.removeEventListener('keydown', handleKeyDown);
-    };
-
     /**
      * Get the value of the text input and use it to create an "event".
      */
@@ -760,7 +738,7 @@
       }
 
       textInput.remove();
-      removeKeyDownListener();
+      context.getElementById(commitPopId).remove();
 
       textEvent.text = textInput.value;
       textEvent.font = '16px Arial';
@@ -797,6 +775,7 @@
         x: event.offsetX,
         y: event.offsetY
       }));
+      textInput.setAttribute('data-top', event.clientY - 50)
       textInput.id = textInputId;
 
       context.body.appendChild(textInput);
@@ -804,8 +783,52 @@
 
       textEvent = event;
       textEvent.inputHeight = textInput.clientHeight;
-      addKeyDownListener();
+      ignoreClicks = true;
 
+    };
+    var creteCommitPop = function (textInput) {
+      var commitPop = context.createElement('div');
+
+      commitPop.style.position = 'fixed';
+      commitPop.style.top = textInput.dataset.top + 'px';
+      commitPop.style.left = textInput.style.left;
+      commitPop.style.width = '200px';
+      commitPop.style.fontSize = '16px';
+      commitPop.style.fontFamily = 'Arial';
+      commitPop.style.zIndex = '2000';
+      commitPop.style.border = '1px solid grey';
+      commitPop.style.height = '40px';
+      commitPop.className = 'ots-annotation-prompt';
+      commitPop.id = commitPopId;
+
+      var commitPopText = context.createElement('span');
+      var text = context.createTextNode('Commit type?');
+      commitPopText.appendChild(text);
+      commitPop.append(commitPopText)
+
+      var commitPopClick = context.createElement('div');
+      commitPopClick.id = commitPopClickId;
+      commitPopClick.className = commitPopClickId;
+
+      var dismissDiv = context.createElement('div');
+      dismissDiv.id = dismissPopId;
+      dismissDiv.className = dismissPopId;
+
+      commitPop.appendChild(commitPopClick);
+      commitPop.appendChild(dismissDiv);
+
+
+      context.body.appendChild(commitPop);
+      dismissDiv.addEventListener('click', function () {
+        context.getElementById(textInputId).remove();
+        context.getElementById(commitPopId).remove();
+        textEvent = null;
+        ignoreClicks = false;
+      });
+
+      commitPopClick.addEventListener('click', function () {
+        processTextEvent();
+      });
     };
 
     addEventListeners(canvas, 'click', handleClick);
@@ -1080,7 +1103,6 @@
       }
 
 
-
       // Refresh the canvas
       draw();
     };
@@ -1305,143 +1327,142 @@
     var imageAssets = options.imageAssets || DEFAULT_ASSET_URL;
 
     var toolbarItems = [{
-        id: 'OT_pen',
-        title: 'Pen',
-        icon: [imageAssets, 'annotation-pencil.png'].join(''),
-        selectedIcon: [imageAssets, 'annotation-pencil.png'].join(''),
-        items: { /* Built dynamically */ }
-      }, {
-        id: 'OT_colors',
-        title: 'Colors',
-        icon: '',
-        items: { /* Built dynamically */ }
-      }, {
-        id: 'OT_shapes',
-        title: 'Shapes',
-        icon: [imageAssets, 'annotation-shapes.png'].join(''),
-        items: [{
-            id: 'OT_rect',
-            title: 'Rectangle',
-            icon: [imageAssets, 'annotation-rectangle.png'].join(''),
-            points: [
-              [0, 0],
-              [1, 0],
-              [1, 1],
-              [0, 1],
-              [0, 0] // Reconnect point
-            ]
-          },
-          {
-            id: 'OT_rect_fill',
-            title: 'Rectangle-Fill',
-            icon: [imageAssets, 'annotation-rectangle.png'].join(''),
-            points: [
-              [0, 0],
-              [1, 0],
-              [1, 1],
-              [0, 1],
-              [0, 0] // Reconnect point
-            ]
-          }, {
-            id: 'OT_oval',
-            title: 'Oval',
-            icon: [imageAssets, 'annotation-oval.png'].join(''),
-            enableSmoothing: true,
-            points: [
-              [0, 0.5],
-              [0.5 + 0.5 * Math.cos(5 * Math.PI / 4), 0.5 + 0.5 * Math.sin(5 * Math.PI / 4)],
-              [0.5, 0],
-              [0.5 + 0.5 * Math.cos(7 * Math.PI / 4), 0.5 + 0.5 * Math.sin(7 * Math.PI / 4)],
-              [1, 0.5],
-              [0.5 + 0.5 * Math.cos(Math.PI / 4), 0.5 + 0.5 * Math.sin(Math.PI / 4)],
-              [0.5, 1],
-              [0.5 + 0.5 * Math.cos(3 * Math.PI / 4), 0.5 + 0.5 * Math.sin(3 * Math.PI / 4)],
-              [0, 0.5],
-              [0.5 + 0.5 * Math.cos(5 * Math.PI / 4), 0.5 + 0.5 * Math.sin(5 * Math.PI / 4)]
-            ]
-          }, {
-            id: 'OT_oval_fill',
-            title: 'Oval-Fill',
-            icon: [imageAssets, 'annotation-oval-fill.png'].join(''),
-            enableSmoothing: true,
-            points: [
-              [0, 0.5],
-              [0.5 + 0.5 * Math.cos(5 * Math.PI / 4), 0.5 + 0.5 * Math.sin(5 * Math.PI / 4)],
-              [0.5, 0],
-              [0.5 + 0.5 * Math.cos(7 * Math.PI / 4), 0.5 + 0.5 * Math.sin(7 * Math.PI / 4)],
-              [1, 0.5],
-              [0.5 + 0.5 * Math.cos(Math.PI / 4), 0.5 + 0.5 * Math.sin(Math.PI / 4)],
-              [0.5, 1],
-              [0.5 + 0.5 * Math.cos(3 * Math.PI / 4), 0.5 + 0.5 * Math.sin(3 * Math.PI / 4)],
-              [0, 0.5],
-              [0.5 + 0.5 * Math.cos(5 * Math.PI / 4), 0.5 + 0.5 * Math.sin(5 * Math.PI / 4)]
-            ]
-          }, {
-            id: 'OT_star',
-            title: 'Star',
-            icon: [imageAssets, 'annotation-star.png'].join(''),
-            points: [
-              /* eslint-disable max-len */
-              [0.5 + 0.5 * Math.cos(90 * (Math.PI / 180)), 0.5 + 0.5 * Math.sin(90 * (Math.PI / 180))],
-              [0.5 + 0.25 * Math.cos(126 * (Math.PI / 180)), 0.5 + 0.25 * Math.sin(126 * (Math.PI / 180))],
-              [0.5 + 0.5 * Math.cos(162 * (Math.PI / 180)), 0.5 + 0.5 * Math.sin(162 * (Math.PI / 180))],
-              [0.5 + 0.25 * Math.cos(198 * (Math.PI / 180)), 0.5 + 0.25 * Math.sin(198 * (Math.PI / 180))],
-              [0.5 + 0.5 * Math.cos(234 * (Math.PI / 180)), 0.5 + 0.5 * Math.sin(234 * (Math.PI / 180))],
-              [0.5 + 0.25 * Math.cos(270 * (Math.PI / 180)), 0.5 + 0.25 * Math.sin(270 * (Math.PI / 180))],
-              [0.5 + 0.5 * Math.cos(306 * (Math.PI / 180)), 0.5 + 0.5 * Math.sin(306 * (Math.PI / 180))],
-              [0.5 + 0.25 * Math.cos(342 * (Math.PI / 180)), 0.5 + 0.25 * Math.sin(342 * (Math.PI / 180))],
-              [0.5 + 0.5 * Math.cos(18 * (Math.PI / 180)), 0.5 + 0.5 * Math.sin(18 * (Math.PI / 180))],
-              [0.5 + 0.25 * Math.cos(54 * (Math.PI / 180)), 0.5 + 0.25 * Math.sin(54 * (Math.PI / 180))],
-              [0.5 + 0.5 * Math.cos(90 * (Math.PI / 180)), 0.5 + 0.5 * Math.sin(90 * (Math.PI / 180))]
-              /* eslint-enable max-len */
-            ]
-          }, {
-            id: 'OT_arrow',
-            title: 'Arrow',
-            icon: [imageAssets, 'annotation-arrow.png'].join(''),
-            points: [
-              [0, 1],
-              [3, 1],
-              [3, 0],
-              [5, 2],
-              [3, 4],
-              [3, 3],
-              [0, 3],
-              [0, 1] // Reconnect point
-            ]
-          }, {
-            id: 'OT_line',
-            title: 'Line',
-            icon: [imageAssets, 'annotation-line.png'].join(''),
-            selectedIcon: [imageAssets, 'annotation-line.png'].join(''),
-            points: [
-              [0, 0],
-              [0, 1]
-            ]
-          }
+      id: 'OT_pen',
+      title: 'Pen',
+      icon: [imageAssets, 'annotation-pencil.png'].join(''),
+      selectedIcon: [imageAssets, 'annotation-pencil.png'].join(''),
+      items: {/* Built dynamically */}
+    }, {
+      id: 'OT_colors',
+      title: 'Colors',
+      icon: '',
+      items: {/* Built dynamically */}
+    }, {
+      id: 'OT_shapes',
+      title: 'Shapes',
+      icon: [imageAssets, 'annotation-shapes.png'].join(''),
+      items: [{
+        id: 'OT_rect',
+        title: 'Rectangle',
+        icon: [imageAssets, 'annotation-rectangle.png'].join(''),
+        points: [
+          [0, 0],
+          [1, 0],
+          [1, 1],
+          [0, 1],
+          [0, 0] // Reconnect point
         ]
-      }, {
-        id: 'OT_text',
-        title: 'Text',
-        icon: [imageAssets, 'annotation-text.png'].join(''),
-        selectedIcon: [imageAssets, 'annotation-text.png'].join('')
-      }, {
-        id: 'OT_capture',
-        title: 'Capture',
-        icon: [imageAssets, 'annotation-camera.png'].join(''),
-        selectedIcon: [imageAssets, 'annotation-camera.png'].join('')
-      }, {
-        id: 'OT_undo',
-        title: 'Undo',
-        icon: [imageAssets, 'annotation-undo.png'].join('')
       },
+        {
+          id: 'OT_rect_fill',
+          title: 'Rectangle-Fill',
+          icon: [imageAssets, 'annotation-rectangle.png'].join(''),
+          points: [
+            [0, 0],
+            [1, 0],
+            [1, 1],
+            [0, 1],
+            [0, 0] // Reconnect point
+          ]
+        }, {
+          id: 'OT_oval',
+          title: 'Oval',
+          icon: [imageAssets, 'annotation-oval.png'].join(''),
+          enableSmoothing: true,
+          points: [
+            [0, 0.5],
+            [0.5 + 0.5 * Math.cos(5 * Math.PI / 4), 0.5 + 0.5 * Math.sin(5 * Math.PI / 4)],
+            [0.5, 0],
+            [0.5 + 0.5 * Math.cos(7 * Math.PI / 4), 0.5 + 0.5 * Math.sin(7 * Math.PI / 4)],
+            [1, 0.5],
+            [0.5 + 0.5 * Math.cos(Math.PI / 4), 0.5 + 0.5 * Math.sin(Math.PI / 4)],
+            [0.5, 1],
+            [0.5 + 0.5 * Math.cos(3 * Math.PI / 4), 0.5 + 0.5 * Math.sin(3 * Math.PI / 4)],
+            [0, 0.5],
+            [0.5 + 0.5 * Math.cos(5 * Math.PI / 4), 0.5 + 0.5 * Math.sin(5 * Math.PI / 4)]
+          ]
+        }, {
+          id: 'OT_oval_fill',
+          title: 'Oval-Fill',
+          icon: [imageAssets, 'annotation-oval-fill.png'].join(''),
+          enableSmoothing: true,
+          points: [
+            [0, 0.5],
+            [0.5 + 0.5 * Math.cos(5 * Math.PI / 4), 0.5 + 0.5 * Math.sin(5 * Math.PI / 4)],
+            [0.5, 0],
+            [0.5 + 0.5 * Math.cos(7 * Math.PI / 4), 0.5 + 0.5 * Math.sin(7 * Math.PI / 4)],
+            [1, 0.5],
+            [0.5 + 0.5 * Math.cos(Math.PI / 4), 0.5 + 0.5 * Math.sin(Math.PI / 4)],
+            [0.5, 1],
+            [0.5 + 0.5 * Math.cos(3 * Math.PI / 4), 0.5 + 0.5 * Math.sin(3 * Math.PI / 4)],
+            [0, 0.5],
+            [0.5 + 0.5 * Math.cos(5 * Math.PI / 4), 0.5 + 0.5 * Math.sin(5 * Math.PI / 4)]
+          ]
+        }, {
+          id: 'OT_star',
+          title: 'Star',
+          icon: [imageAssets, 'annotation-star.png'].join(''),
+          points: [
+            /* eslint-disable max-len */
+            [0.5 + 0.5 * Math.cos(90 * (Math.PI / 180)), 0.5 + 0.5 * Math.sin(90 * (Math.PI / 180))],
+            [0.5 + 0.25 * Math.cos(126 * (Math.PI / 180)), 0.5 + 0.25 * Math.sin(126 * (Math.PI / 180))],
+            [0.5 + 0.5 * Math.cos(162 * (Math.PI / 180)), 0.5 + 0.5 * Math.sin(162 * (Math.PI / 180))],
+            [0.5 + 0.25 * Math.cos(198 * (Math.PI / 180)), 0.5 + 0.25 * Math.sin(198 * (Math.PI / 180))],
+            [0.5 + 0.5 * Math.cos(234 * (Math.PI / 180)), 0.5 + 0.5 * Math.sin(234 * (Math.PI / 180))],
+            [0.5 + 0.25 * Math.cos(270 * (Math.PI / 180)), 0.5 + 0.25 * Math.sin(270 * (Math.PI / 180))],
+            [0.5 + 0.5 * Math.cos(306 * (Math.PI / 180)), 0.5 + 0.5 * Math.sin(306 * (Math.PI / 180))],
+            [0.5 + 0.25 * Math.cos(342 * (Math.PI / 180)), 0.5 + 0.25 * Math.sin(342 * (Math.PI / 180))],
+            [0.5 + 0.5 * Math.cos(18 * (Math.PI / 180)), 0.5 + 0.5 * Math.sin(18 * (Math.PI / 180))],
+            [0.5 + 0.25 * Math.cos(54 * (Math.PI / 180)), 0.5 + 0.25 * Math.sin(54 * (Math.PI / 180))],
+            [0.5 + 0.5 * Math.cos(90 * (Math.PI / 180)), 0.5 + 0.5 * Math.sin(90 * (Math.PI / 180))]
+            /* eslint-enable max-len */
+          ]
+        }, {
+          id: 'OT_arrow',
+          title: 'Arrow',
+          icon: [imageAssets, 'annotation-arrow.png'].join(''),
+          points: [
+            [0, 1],
+            [3, 1],
+            [3, 0],
+            [5, 2],
+            [3, 4],
+            [3, 3],
+            [0, 3],
+            [0, 1] // Reconnect point
+          ]
+        }, {
+          id: 'OT_line',
+          title: 'Line',
+          icon: [imageAssets, 'annotation-line.png'].join(''),
+          selectedIcon: [imageAssets, 'annotation-line.png'].join(''),
+          points: [
+            [0, 0],
+            [0, 1]
+          ]
+        }
+      ]
+    }, {
+      id: 'OT_text',
+      title: 'Text',
+      icon: [imageAssets, 'annotation-text.png'].join(''),
+      selectedIcon: [imageAssets, 'annotation-text.png'].join('')
+    }, {
+      id: 'OT_capture',
+      title: 'Capture',
+      icon: [imageAssets, 'annotation-camera.png'].join(''),
+      selectedIcon: [imageAssets, 'annotation-camera.png'].join('')
+    }, {
+      id: 'OT_undo',
+      title: 'Undo',
+      icon: [imageAssets, 'annotation-undo.png'].join('')
+    },
       {
         id: 'OT_clear',
         title: 'Clear',
         icon: [imageAssets, 'annotation-clear.png'].join('')
       }
     ];
-
 
 
     /**
@@ -1478,27 +1499,27 @@
     this.items = getItems();
 
     this.colors = options.colors || [
-      '#1abc9c',
-      '#2ecc71',
-      '#3498db',
-      '#9b59b6',
-      '#34495e',
-      '#16a085',
-      '#27ae60',
-      '#2980b9',
-      '#8e44ad',
-      '#2c3e50',
-      '#f1c40f',
-      '#e67e22',
-      '#e74c3c',
-      '#ecf0f1',
-      '#95a5a6',
-      '#f39c12',
-      '#d35400',
-      '#c0392b',
-      '#bdc3c7',
-      '#7f8c8d'
-    ];
+        '#1abc9c',
+        '#2ecc71',
+        '#3498db',
+        '#9b59b6',
+        '#34495e',
+        '#16a085',
+        '#27ae60',
+        '#2980b9',
+        '#8e44ad',
+        '#2c3e50',
+        '#f1c40f',
+        '#e67e22',
+        '#e74c3c',
+        '#ecf0f1',
+        '#95a5a6',
+        '#f39c12',
+        '#d35400',
+        '#c0392b',
+        '#bdc3c7',
+        '#7f8c8d'
+      ];
 
     this.cbs = [];
     var canvases = [];
@@ -1713,8 +1734,12 @@
           document.getElementById('OT_toolbar').classList[action]('colors-hover');
         };
         var colors = context.getElementById('OT_colors');
-        colors.addEventListener('mouseenter', function () { toggleColorsHover(true); });
-        colors.addEventListener('mouseleave', function () { toggleColorsHover(false); });
+        colors.addEventListener('mouseenter', function () {
+          toggleColorsHover(true);
+        });
+        colors.addEventListener('mouseleave', function () {
+          toggleColorsHover(false);
+        });
         /** End color picker hover state */
 
         panel.onclick = function (ev) {
@@ -1764,7 +1789,7 @@
 
                         var lineIcon = context.createElement('div');
                         lineIcon.setAttribute('class', 'line-width-icon')
-                          // TODO Allow devs to change this?
+                        // TODO Allow devs to change this?
                         lineIcon.style.backgroundColor = '#FFFFFF';
                         lineIcon.style.width = '80%';
                         lineIcon.style.height = subItem.size + 'px';
