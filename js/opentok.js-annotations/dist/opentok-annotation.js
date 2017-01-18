@@ -379,6 +379,9 @@
       draw(null, true);
     };
 
+    this.onClearAnnotation = function () {
+      dismissTextAnnotation();
+    };
     /** Canvas Handling **/
 
     function addEventListeners(el, s, fn) {
@@ -703,11 +706,10 @@
     var textEvent;
     var textInputId = 'textAnnotation';
     var commitPopId = 'commitTextPop';
-    var commitPopClickId = 'comfirm-btn';
+    var commitPopClickId = 'confirm-btn';
     var dismissPopId = 'dismiss-btn';
     var ignoreClicks = false;
     var handleClick = function (event) {
-
       event.preventDefault();
 
       if (!self.selectedItem || self.selectedItem.id !== 'OT_text' || ignoreClicks) {
@@ -737,9 +739,6 @@
         return;
       }
 
-      textInput.remove();
-      context.getElementById(commitPopId).remove();
-
       textEvent.text = textInput.value;
       textEvent.font = '16px Arial';
       textEvent.userColor = self.userColor;
@@ -752,6 +751,8 @@
       }
       eventHistory.push(textEvent);
       updateCanvas(textEvent);
+      dismissTextAnnotation();
+      ignoreClicks = false;
     };
 
 
@@ -781,12 +782,26 @@
       context.body.appendChild(textInput);
       textInput.focus();
 
+      textInput.addEventListener('keydown', function(event){
+        //If its Enter
+        if (event.which === 13) {
+          creteCommitPop(textInput)
+        }
+      })
+
+      textInput.addEventListener('blur', function(){
+        creteCommitPop(textInput)
+      })
+
       textEvent = event;
       textEvent.inputHeight = textInput.clientHeight;
       ignoreClicks = true;
 
     };
+
     var creteCommitPop = function (textInput) {
+      if(context.getElementById(commitPopId)) return;
+
       var commitPop = context.createElement('div');
 
       commitPop.style.position = 'fixed';
@@ -817,19 +832,21 @@
       commitPop.appendChild(commitPopClick);
       commitPop.appendChild(dismissDiv);
 
-
       context.body.appendChild(commitPop);
-      dismissDiv.addEventListener('click', function () {
-        context.getElementById(textInputId).remove();
-        context.getElementById(commitPopId).remove();
-        textEvent = null;
-        ignoreClicks = false;
-      });
+
+      dismissDiv.addEventListener('click', dismissTextAnnotation);
 
       commitPopClick.addEventListener('click', function () {
         processTextEvent();
       });
     };
+
+    var dismissTextAnnotation = function(){
+      if(context.getElementById(textInputId)) context.getElementById(textInputId).remove();
+      if(context.getElementById(commitPopId)) context.getElementById(commitPopId).remove();
+      textEvent = null;
+      ignoreClicks = false;
+    }
 
     addEventListeners(canvas, 'click', handleClick);
 
@@ -2350,6 +2367,7 @@
 
   // Remove the toolbar and cancel event listeners
   var _removeToolbar = function () {
+    _canvas.onClearAnnotation();
     $(_elements.resizeSubject).off('resize', _resizeCanvas);
     toolbar.remove();
     $('#annotationToolbarContainer').remove();

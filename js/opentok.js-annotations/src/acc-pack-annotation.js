@@ -293,6 +293,7 @@
 
   // Remove the toolbar and cancel event listeners
   var _removeToolbar = function () {
+    _canvas.onClearAnnotation();
     $(_elements.resizeSubject).off('resize', _resizeCanvas);
     toolbar.remove();
     $('#annotationToolbarContainer').remove();
