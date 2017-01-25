@@ -31,10 +31,10 @@
                             <rect key="frame" x="24" y="24" width="295" height="587"/>
                             <subviews>
                                 <imageView userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="t7S-ej-ybZ">
-                                    <rect key="frame" x="0.0" y="0.0" width="295" height="411"/>
+                                    <rect key="frame" x="0.0" y="0.0" width="295" height="411.5"/>
                                 </imageView>
                                 <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="20MB" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="xJl-c5-skg">
-                                    <rect key="frame" x="126.5" y="453" width="43" height="20"/>
+                                    <rect key="frame" x="126.5" y="453.5" width="43" height="20"/>
                                     <fontDescription key="fontDescription" type="system" pointSize="16"/>
                                     <color key="textColor" red="0.66666666666666663" green="0.66666666666666663" blue="0.66666666666666663" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                     <nil key="highlightedColor"/>
@@ -43,7 +43,7 @@
                                     </variation>
                                 </label>
                                 <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Screenshot April 14, 2016" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="0A6-ua-Qw2">
-                                    <rect key="frame" x="26.5" y="427" width="242" height="24"/>
+                                    <rect key="frame" x="26.5" y="427.5" width="242" height="24"/>
                                     <fontDescription key="fontDescription" type="system" weight="semibold" pointSize="20"/>
                                     <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                     <nil key="highlightedColor"/>
@@ -52,10 +52,10 @@
                                     </variation>
                                 </label>
                                 <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="rgL-3O-VOb">
-                                    <rect key="frame" x="26.5" y="485" width="242" height="102"/>
+                                    <rect key="frame" x="26.5" y="485.5" width="242" height="101.5"/>
                                     <subviews>
                                         <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="cBp-6l-6Sr">
-                                            <rect key="frame" x="0.0" y="72" width="242" height="30"/>
+                                            <rect key="frame" x="0.0" y="71.5" width="242" height="30"/>
                                             <color key="backgroundColor" red="0.66666666666666663" green="0.66666666666666663" blue="0.66666666666666663" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                             <state key="normal" title="Cancel">
                                                 <color key="titleColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
@@ -68,7 +68,7 @@
                                             </connections>
                                         </button>
                                         <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="MxW-iT-8fg">
-                                            <rect key="frame" x="0.0" y="36.5" width="242" height="30"/>
+                                            <rect key="frame" x="0.0" y="36" width="242" height="30.5"/>
                                             <color key="backgroundColor" red="0.0" green="0.21568627450980393" blue="0.2627450980392157" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                             <state key="normal" title="Save">
                                                 <color key="titleColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
@@ -96,7 +96,7 @@
                                     </subviews>
                                     <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                     <constraints>
-                                        <constraint firstAttribute="height" relation="lessThanOrEqual" constant="300" id="5eQ-kK-PhC"/>
+                                        <constraint firstAttribute="height" relation="greaterThanOrEqual" constant="100" id="5eQ-kK-PhC"/>
                                         <constraint firstItem="MxW-iT-8fg" firstAttribute="leading" secondItem="rgL-3O-VOb" secondAttribute="leading" id="7F1-jc-bG7"/>
                                         <constraint firstItem="Azp-F2-TDQ" firstAttribute="top" secondItem="rgL-3O-VOb" secondAttribute="top" id="AH6-O5-wup"/>
                                         <constraint firstAttribute="trailing" secondItem="cBp-6l-6Sr" secondAttribute="trailing" id="AdQ-mq-ks0"/>
