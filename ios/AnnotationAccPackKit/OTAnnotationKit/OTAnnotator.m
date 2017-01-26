@@ -139,6 +139,12 @@ receivedSignalType:(NSString*)type
  fromConnection:(OTConnection*)connection
      withString:(NSString*)string {
     
+    // TODO for the next person who sees this: a workaround for making the web annotation work
+    if ([type isEqualToString:@"otAnnotation_requestPlatform"]) {
+        [self.session signalWithType:@"otAnnotation_mobileScreenShare" string:[JSON stringify:@{@"platform":@"ios"}] connection:nil error:nil];
+        return;
+    }
+        
     if (![type isEqualToString:@"otAnnotation_pen"] &&
         ![type isEqualToString:@"otAnnotation_text"] &&
         ![type isEqualToString:@"otAnnotation_undo"] &&
