@@ -307,7 +307,7 @@
   };
 
   // Determine whether or not the subscriber stream is from a mobile device
-  var _requestPlatformData = function () {
+  var _requestPlatformData = function (pubSub) {
     _session.signal({
       type: 'otAnnotation_requestPlatform',
       to: pubSub.stream.connection,
