@@ -2473,7 +2473,7 @@
       };
 
     _canvas.onScreenCapture(onScreenCapture);
-    _requestPlatformData();
+    _requestPlatformData(pubSub);
 
 
     var context = _elements.externalWindow ? _elements.externalWindow : window;
