@@ -10,5 +10,6 @@
 
 @property (nonatomic) UIView *selectionShadowView;
 @property (nonatomic) OTAnnotationColorPickerView *colorPickerView;
+@property (nonatomic) UIView *separatorView;
 
 @end
