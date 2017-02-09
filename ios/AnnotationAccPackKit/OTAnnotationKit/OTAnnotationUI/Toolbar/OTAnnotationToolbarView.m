@@ -106,6 +106,9 @@ NSString * const kOTAnnotationToolbarDidAddTextAnnotation = @"kOTAnnotationToolb
 }
 
 - (void)setToolbarViewOrientation:(OTAnnotationToolbarViewOrientation)toolbarViewOrientation {
+    
+    if (_toolbarViewOrientation == toolbarViewOrientation) return;
+    
     _toolbarViewOrientation = toolbarViewOrientation;
     
     if (toolbarViewOrientation == OTAnnotationToolbarViewOrientationPortraitlBottom) {
@@ -243,7 +246,7 @@ NSString * const kOTAnnotationToolbarDidAddTextAnnotation = @"kOTAnnotationToolb
         [self.toolbar removeContentViewAtIndex:0];
     }
     else {
-        [self.toolbar removeContentViewAtIndex:kNumberOfButtons];
+        [self.toolbar removeContentViewAtIndex:6];
     }
     [self moveSelectionShadowViewTo:nil];
     [self resetToolbarButtons];
@@ -313,13 +316,13 @@ NSString * const kOTAnnotationToolbarDidAddTextAnnotation = @"kOTAnnotationToolb
     }
     else if (sender == self.annotateButton) {
         self.annotationScrollView.annotatable = YES;
-        [self dismissColorPickerViewWithAniamtion:NO];
+        [self dismissColorPickerViewWithAniamtion:YES];
         if (![self.toolbar containedContentView:self.doneButton]) {
             if (self.toolbarViewOrientation == OTAnnotationToolbarViewOrientationPortraitlBottom) {
                 [self.toolbar insertContentView:self.doneButton atIndex:0];
             }
             else {
-                [self.toolbar insertContentView:self.doneButton atIndex:kNumberOfButtons];
+                [self.toolbar insertContentView:self.doneButton atIndex:6];
             }
         }
         OTAnnotationPath *path = [[OTAnnotationPath alloc] initWithStrokeColor:self.colorPickerView.selectedColor];
@@ -341,7 +344,7 @@ NSString * const kOTAnnotationToolbarDidAddTextAnnotation = @"kOTAnnotationToolb
                 [self.toolbar insertContentView:self.doneButton atIndex:0];
             }
             else {
-                [self.toolbar insertContentView:self.doneButton atIndex:kNumberOfButtons];
+                [self.toolbar insertContentView:self.doneButton atIndex:6];
             }
         }
         

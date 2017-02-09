@@ -9,13 +9,13 @@
 #import "SendAnnotationFillViewController.h"
 
 #import "OTAnnotator.h"
-#import "OTScreenSharer.h"
+#import "OTOneToOneCommunicator.h"
 
 #import "AppDelegate.h"
 
-@interface SendAnnotationFillViewController () <OTScreenShareDataSource, OTAnnotatorDataSource>
+@interface SendAnnotationFillViewController () <OTOneToOneCommunicatorDataSource, OTAnnotatorDataSource>
 @property (nonatomic) OTAnnotator *annotator;
-@property (nonatomic) OTScreenSharer *sharer;
+@property (nonatomic) OTOneToOneCommunicator *sharer;
 @end
 
 @implementation SendAnnotationFillViewController
@@ -31,51 +31,51 @@
 - (void)viewDidAppear:(BOOL)animated {
     [super viewDidAppear:animated];
     
-    self.sharer = [[OTScreenSharer alloc] init];
+    self.sharer = [[OTOneToOneCommunicator alloc] init];
     self.sharer.dataSource = self;
     self.sharer.subscriberVideoContentMode = OTVideoViewFit;
-    [self.sharer connectWithView:nil
-                         handler:^(OTCommunicationSignal signal, NSError *error) {
+    [self.sharer connectWithHandler:^(OTCommunicationSignal signal, NSError *error) {
                              
-                             if (!error) {
-                                 
-                                 if (signal == OTPublisherCreated) {
-                                     self.sharer.publishAudio = NO;
-                                     self.sharer.subscribeToAudio = NO;
-                                 }
-                                 else if (signal == OTSubscriberReady) {
-                                     
-                                     [self.sharer.subscriberView removeFromSuperview];
-                                     self.sharer.subscriberView.frame = CGRectMake(0, 0, self.sharer.subscriberVideoDimension.width, self.sharer.subscriberVideoDimension.height);
-                                     
-                                     // connect for annotation
-                                     self.annotator = [[OTAnnotator alloc] init];
-                                     self.annotator.dataSource = self;
-                                     [self.annotator connectWithCompletionHandler:^(OTAnnotationSignal signal, NSError *error) {
-                                                       
-                                         if (signal == OTAnnotationSessionDidConnect){
-                                 
-                                             // configure annotation view
-                                             self.annotator.annotationScrollView.frame = self.view.bounds;
-                                             self.annotator.annotationScrollView.scrollView.contentSize = self.sharer.subscriberView.frame.size;
-                                             [self.view addSubview:self.annotator.annotationScrollView];
-                                           
-                                             // self.sharer.subscriberView is the screen shared from a remote client.
-                                             // It does not make sense to `connectForSendingAnnotationWithSize` if you don't receive a screen sharing.
-                                             [self.annotator.annotationScrollView addContentView:self.sharer.subscriberView];
-                                           
-                                             // configure annotation feature
-                                             self.annotator.annotationScrollView.annotatable = YES;
-                                             self.annotator.annotationScrollView.annotationView.currentAnnotatable = [[OTAnnotationPath alloc] initWithStrokeColor:[UIColor yellowColor]];
-                                         }
-                                     }];
-                                     
-                                     self.annotator.dataSendingHandler = ^(NSArray *data, NSError *error) {
-                                         NSLog(@"%@", data);
-                                     };
-                                 }
-                             }
-                         }];
+        if (!error) {
+
+            if (signal == OTPublisherCreated) {
+                self.sharer.publishAudio = NO;
+                self.sharer.subscribeToAudio = NO;
+            }
+            else if (signal == OTSubscriberReady) {
+
+                [self.sharer.subscriberView removeFromSuperview];
+#warning - TODO
+//                self.sharer.subscriberView.frame = CGRectMake(0, 0, self.sharer.subscriberVideoDimension.width, self.sharer.subscriberVideoDimension.height);
+
+                // connect for annotation
+                self.annotator = [[OTAnnotator alloc] init];
+                self.annotator.dataSource = self;
+                [self.annotator connectWithCompletionHandler:^(OTAnnotationSignal signal, NSError *error) {
+           
+                    if (signal == OTAnnotationSessionDidConnect){
+
+                        // configure annotation view
+                        self.annotator.annotationScrollView.frame = self.view.bounds;
+                        self.annotator.annotationScrollView.scrollView.contentSize = self.sharer.subscriberView.frame.size;
+                        [self.view addSubview:self.annotator.annotationScrollView];
+
+                        // self.sharer.subscriberView is the screen shared from a remote client.
+                        // It does not make sense to `connectForSendingAnnotationWithSize` if you don't receive a screen sharing.
+                        [self.annotator.annotationScrollView addContentView:self.sharer.subscriberView];
+
+                        // configure annotation feature
+                        self.annotator.annotationScrollView.annotatable = YES;
+                        self.annotator.annotationScrollView.annotationView.currentAnnotatable = [[OTAnnotationPath alloc] initWithStrokeColor:[UIColor yellowColor]];
+                    }
+                }];
+
+                self.annotator.dataSendingHandler = ^(NSArray *data, NSError *error) {
+                    NSLog(@"%@", data);
+                };
+            }
+        }
+    }];
 }
 
 - (void)setupScollingAssistance {
@@ -121,7 +121,7 @@
     return [(AppDelegate*)[[UIApplication sharedApplication] delegate] getSharedAcceleratorSession];
 }
 
-- (OTAcceleratorSession *)sessionOfOTScreenSharer:(OTScreenSharer *)screenSharer {
+- (OTAcceleratorSession *)sessionOfOTOneToOneCommunicator:(OTOneToOneCommunicator *)oneToOneCommunicator {
     return [(AppDelegate*)[[UIApplication sharedApplication] delegate] getSharedAcceleratorSession];
 }
 

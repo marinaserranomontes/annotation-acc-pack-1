@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name             = "OTAnnotationKit"
-  s.version          = "1.2.0-beta14"
+  s.version          = "2.0.0-beta1"
   s.summary          = "OpenTok Annotations Accelerator Pack enables users to annotate their screens."
 
   s.description      = "This document describes how to use the OpenTok Annotations Accelerator Pack for iOS. Through the exploration of the OpenTok Annotations Sample App, you will learn best practices for annotating on an iOS mobile device."
@@ -11,7 +11,7 @@ Pod::Spec.new do |s|
   s.source           = { :git => "https://github.com/opentok/annotation-acc-pack.git", :tag => s.version.to_s }
   s.social_media_url = 'https://twitter.com/tokbox/'
 
-  s.ios.deployment_target = '8.0'
+  s.ios.deployment_target = '9.0'
 
   s.source_files = 'ios/AnnotationAccPackKit/OTAnnotationKit/**/*'
 
@@ -32,5 +32,5 @@ Pod::Spec.new do |s|
     'ios/AnnotationAccPackKit/OTAnnotationKit/OTAnnotationUI/Toolbar/OTAnnotationToolbarView.h'
 
   s.dependency 'LHToolbar', '1.3.0-beta'
-  s.dependency 'OTAcceleratorPackUtil'
+  s.dependency 'OTAcceleratorCore'
 end
