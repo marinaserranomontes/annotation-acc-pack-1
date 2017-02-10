@@ -203,13 +203,13 @@ receivedSignalType:(NSString*)type
             UIColor *drawingColor = [UIColor colorFromHexString:[jsonArray firstObject][@"color"]];
             CGFloat lineWidth = [[jsonArray firstObject][@"lineWidth"] floatValue];
             
-            self.annotationScrollView.annotationView.currentAnnotatable = [[OTRemoteAnnotationPath alloc] initWithStrokeColor:drawingColor
+            self.annotationScrollView.annotationView.remoteAnnotatable = [[OTRemoteAnnotationPath alloc] initWithStrokeColor:drawingColor
                                                                                                                    remoteGUID:remoteGUID];
             OTRemoteAnnotationPath *currentPath = (OTRemoteAnnotationPath *)self.annotationScrollView.annotationView.currentAnnotatable;
             currentPath.lineWidth = lineWidth;
         }
         else {
-            self.annotationScrollView.annotationView.currentAnnotatable = [[OTRemoteAnnotationPath alloc] initWithStrokeColor:nil];
+            self.annotationScrollView.annotationView.remoteAnnotatable = [[OTRemoteAnnotationPath alloc] initWithStrokeColor:nil];
         }
         
         // draw oval
@@ -237,7 +237,7 @@ receivedSignalType:(NSString*)type
             // this is the unique property from web
             NSString *platform = json[@"platform"];
             if (platform && [platform isEqualToString:@"web"]) {
-                [self drawOnFitModeWithJson:json path:(OTRemoteAnnotationPath *)self.annotationScrollView.annotationView.currentAnnotatable];
+                [self drawOnFitModeWithJson:json path:(OTRemoteAnnotationPath *)self.annotationScrollView.annotationView.remoteAnnotatable];
                 continue;
             }
             
@@ -259,11 +259,11 @@ receivedSignalType:(NSString*)type
 
             if ((remoteCanvasWidth == videoWidth && remoteCanvasHeight == videoHeight) || thisCanvasAspectRatio == remoteCanvasAspectRatio) {
                 // draw on the fill mode or on the same aspect ratio
-                [self drawOnFillModeWithJson:json path:(OTRemoteAnnotationPath *)self.annotationScrollView.annotationView.currentAnnotatable];
+                [self drawOnFillModeWithJson:json path:(OTRemoteAnnotationPath *)self.annotationScrollView.annotationView.remoteAnnotatable];
             }
             else {
                 // draw on irregular aspect ratio
-                [self drawOnFitModeWithJson:json path:(OTRemoteAnnotationPath *)self.annotationScrollView.annotationView.currentAnnotatable];
+                [self drawOnFitModeWithJson:json path:(OTRemoteAnnotationPath *)self.annotationScrollView.annotationView.remoteAnnotatable];
             }
         }
     }
@@ -383,9 +383,7 @@ receivedSignalType:(NSString*)type
     NSString *fontSizeString = json[@"font"];
     NSArray *fontSizeStringArray = [fontSizeString componentsSeparatedByString:@" "];
     NSUInteger fontSize = [[fontSizeStringArray firstObject] integerValue];
-//    NSString *remoteGUID = json[@"guid"];
     
-//    if (!text || !color || !fontSizeString || !fontSizeStringArray || fontSizeStringArray.count != 2 || !remoteGUID) return;
     if (!text || !color || !fontSizeString || !fontSizeStringArray || fontSizeStringArray.count != 2) return;
     
     OTRemoteAnnotationTextView *annotationTextView = [[OTRemoteAnnotationTextView alloc] initWithText:text
