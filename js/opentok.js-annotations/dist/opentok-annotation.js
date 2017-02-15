@@ -2445,8 +2445,8 @@
    * @ param {object} container - The parent container for the canvas element
    * @ param {object} options
    * @param {object} options.canvasContainer - The id of the parent for the annotation canvas
-   * @param {object} [options.externalWindow] - Reference to the annotation window if publishing
-   * @param {array} [options.absoluteParent] - Reference element for resize if other than container
+   * @param {object | string} [options.externalWindow] - Reference to the annotation window (or query selector) if publishing
+   * @param {array | string} [options.absoluteParent] - Reference to element (or query selector) for resize if other than container
    */
   var linkCanvas = function (pubSub, container, options) {
     /**
