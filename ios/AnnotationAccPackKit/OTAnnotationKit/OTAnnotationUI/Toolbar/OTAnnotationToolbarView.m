@@ -14,6 +14,8 @@ NSString * const kOTAnnotationToolbarDidPressEraseButton = @"kOTAnnotationToolba
 NSString * const kOTAnnotationToolbarDidPressCleanButton = @"kOTAnnotationToolbarDidPressCleanButton";
 NSString * const kOTAnnotationToolbarDidAddTextAnnotation = @"kOTAnnotationToolbarDidAddTextAnnotation";
 
+#define kNumberOfButtons 6
+
 @interface OTAnnotationToolbarButton : UIButton
 @end
 
@@ -104,17 +106,20 @@ NSString * const kOTAnnotationToolbarDidAddTextAnnotation = @"kOTAnnotationToolb
 }
 
 - (void)setToolbarViewOrientation:(OTAnnotationToolbarViewOrientation)toolbarViewOrientation {
+    
+    if (_toolbarViewOrientation == toolbarViewOrientation) return;
+    
     _toolbarViewOrientation = toolbarViewOrientation;
     
     if (toolbarViewOrientation == OTAnnotationToolbarViewOrientationPortraitlBottom) {
         self.toolbar.orientation = LHToolbarOrientationHorizontal;
         self.colorPickerView.annotationColorPickerViewOrientation = OTAnnotationColorPickerViewOrientationPortrait;
-    }
+   }
     else if (toolbarViewOrientation == OTAnnotationToolbarViewOrientationLandscapeLeft ||
              toolbarViewOrientation == OTAnnotationToolbarViewOrientationLandscapeRight) {
         self.toolbar.orientation = LHToolbarOrientationVertical;
         self.colorPickerView.annotationColorPickerViewOrientation = OTAnnotationColorPickerViewOrientationLandscape;
-    }
+   }
     
     if (self.toolbarViewOrientation == OTAnnotationToolbarViewOrientationPortraitlBottom) {
         [_toolbar setContentView:_annotateButton atIndex:0];
@@ -140,8 +145,20 @@ NSString * const kOTAnnotationToolbarDidAddTextAnnotation = @"kOTAnnotationToolb
     if (!_colorPickerView) {
         _colorPickerView = [[OTAnnotationColorPickerView alloc] initWithFrame:CGRectMake(self.frame.origin.x, self.frame.origin.y, CGRectGetWidth([UIScreen mainScreen].bounds), HeightOfColorPicker)];
         _colorPickerView.delegate = self;
+        _colorPickerView.backgroundColor = [UIColor colorWithRed:51.0f/255.0f green:51.0f/255.0f blue:51.0f/255 alpha:1.0f];
     }
     return _colorPickerView;
+}
+
+- (UIView *)separatorView {
+    if (!_separatorView) {
+        CGRect separatorFrame = CGRectMake(self.frame.origin.x, self.frame.origin.y, CGRectGetWidth([UIScreen mainScreen].bounds), HeightOfColorPicker);
+        _separatorView = [[UIView alloc] initWithFrame:separatorFrame];
+        _separatorView.backgroundColor = [UIColor whiteColor];
+        _separatorView.alpha = 0;
+        [self addSubview:_separatorView];
+    }
+    return _separatorView;
 }
 
 - (UIView *)selectionShadowView {
@@ -157,11 +174,11 @@ NSString * const kOTAnnotationToolbarDidAddTextAnnotation = @"kOTAnnotationToolb
     if (!_doneButton) {
         
         _doneButton = [[OTAnnotationToolbarDoneButton alloc] init];
-        [_doneButton setImage:[UIImage imageNamed:@"whiteCross"
+        [_doneButton setImage:[UIImage imageNamed:@"checkmark"
                                          inBundle:[OTAnnotationKitBundle annotationKitBundle]
                     compatibleWithTraitCollection:nil]
                      forState:UIControlStateNormal];
-        [_doneButton setBackgroundColor:[UIColor redColor]];
+        [_doneButton setBackgroundColor:[UIColor colorWithRed:158.0/255.0 green:206.0/255.0 blue:73.0/255.0 alpha:1.0]];
         [_doneButton addTarget:self action:@selector(toolbarButtonPressed:) forControlEvents:UIControlEventTouchUpInside];
     }
     return _doneButton;
@@ -180,13 +197,13 @@ NSString * const kOTAnnotationToolbarDidAddTextAnnotation = @"kOTAnnotationToolb
     if (!annotationScrollView) return nil;
     
     if (self = [super initWithFrame:frame]) {
-        _toolbar = [[LHToolbar alloc] initWithNumberOfItems:6];
+        _toolbar = [[LHToolbar alloc] initWithNumberOfItems:kNumberOfButtons];
         _toolbar.translatesAutoresizingMaskIntoConstraints = NO;
         [self configureToolbarButtons];
         [self addSubview:_toolbar];
         [_toolbar addAttachedLayoutConstantsToSuperview];
         
-        self.backgroundColor = [UIColor lightGrayColor];
+        self.backgroundColor = [UIColor colorWithRed:69.0/255.0 green:69.0/255.0 blue:69.0/255.0 alpha:1.0];
         _annotationScrollView = annotationScrollView;
     }
     return self;
@@ -205,6 +222,7 @@ NSString * const kOTAnnotationToolbarDidAddTextAnnotation = @"kOTAnnotationToolb
     if (!self.superview) {
         self.annotationScrollView.annotatable = NO;
         [self.colorPickerView removeFromSuperview];
+        [self.separatorView removeFromSuperview];
     }
 }
 
@@ -243,25 +261,30 @@ NSString * const kOTAnnotationToolbarDidAddTextAnnotation = @"kOTAnnotationToolb
     NSBundle *frameworkBundle = [OTAnnotationKitBundle annotationKitBundle];
     
     _annotateButton = [[OTAnnotationToolbarButton alloc] init];
+    _annotateButton.imageEdgeInsets = UIEdgeInsetsMake(10, 9, 10, 9);
     [_annotateButton setImage:[UIImage imageNamed:@"annotate" inBundle:frameworkBundle compatibleWithTraitCollection:nil] forState:UIControlStateNormal];
     [_annotateButton addTarget:self action:@selector(toolbarButtonPressed:) forControlEvents:UIControlEventTouchUpInside];
     
-    _colorButton = [[OTAnnotationColorPickerViewButton alloc] init];
+    _colorButton = [[OTAnnotationColorPickerViewButton alloc] initWithWhiteBorder];
     [_colorButton addTarget:self action:@selector(toolbarButtonPressed:) forControlEvents:UIControlEventTouchUpInside];
 
     _textButton = [[OTAnnotationToolbarButton alloc] init];
+    _textButton.imageEdgeInsets = UIEdgeInsetsMake(10, 9, 10, 9);
     [_textButton setImage:[UIImage imageNamed:@"text" inBundle:frameworkBundle compatibleWithTraitCollection:nil] forState:UIControlStateNormal];
     [_textButton addTarget:self action:@selector(toolbarButtonPressed:) forControlEvents:UIControlEventTouchUpInside];
     
     _screenshotButton = [[OTAnnotationToolbarButton alloc] init];
     [_screenshotButton setImage:[UIImage imageNamed:@"screenshot" inBundle:frameworkBundle compatibleWithTraitCollection:nil] forState:UIControlStateNormal];
+    _screenshotButton.imageEdgeInsets = UIEdgeInsetsMake(12, 12, 12, 12);
     [_screenshotButton addTarget:self action:@selector(toolbarButtonPressed:) forControlEvents:UIControlEventTouchUpInside];
     
     _eraseButton = [[OTAnnotationToolbarButton alloc] init];
+    _eraseButton.imageEdgeInsets = UIEdgeInsetsMake(11, 12, 11, 12);
     [_eraseButton setImage:[UIImage imageNamed:@"erase" inBundle:frameworkBundle compatibleWithTraitCollection:nil] forState:UIControlStateNormal];
     [_eraseButton addTarget:self action:@selector(toolbarButtonPressed:) forControlEvents:UIControlEventTouchUpInside];
     
     _eraseAllButton = [[OTAnnotationToolbarButton alloc] init];
+    _eraseAllButton.imageEdgeInsets = UIEdgeInsetsMake(11, 12, 11, 12);
     [_eraseAllButton setImage:[UIImage imageNamed:@"trashcan" inBundle:frameworkBundle compatibleWithTraitCollection:nil] forState:UIControlStateNormal];
     [_eraseAllButton addTarget:self action:@selector(toolbarButtonPressed:) forControlEvents:UIControlEventTouchUpInside];
     

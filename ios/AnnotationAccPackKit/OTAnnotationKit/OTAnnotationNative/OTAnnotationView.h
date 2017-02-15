@@ -82,6 +82,11 @@
 - (void)removeAllRemoteAnnotatables;
 
 /**
+ *  The remote annotatable object that being used, uncommitted. If a new remoteAnnotatable is being set, the last remoteAnnotatable object will be commited.
+ */
+@property (nonatomic) id<OTAnnotatable> remoteAnnotatable;
+
+/**
  *  The current annotatable object that being used, uncommitted. If a new currentAnnotatable is being set, the last annotatable object will be commited.
  */
 @property (nonatomic) id<OTAnnotatable> currentAnnotatable;

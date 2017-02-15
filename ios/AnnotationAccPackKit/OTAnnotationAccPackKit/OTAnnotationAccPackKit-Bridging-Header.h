@@ -3,5 +3,5 @@
 //
 
 #import "OTAnnotationScrollView.h"
-#import "OTScreenSharer.h"
+#import "OTOneToOneCommunicator.h"
 #import "OTFullScreenAnnotationViewController.h"

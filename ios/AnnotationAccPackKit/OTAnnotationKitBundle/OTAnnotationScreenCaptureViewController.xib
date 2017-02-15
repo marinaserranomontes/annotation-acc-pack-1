@@ -35,20 +35,50 @@
                                 </imageView>
                                 <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="20MB" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="xJl-c5-skg">
                                     <rect key="frame" x="126.5" y="453.5" width="43" height="20"/>
+                                    <constraints>
+                                        <constraint firstAttribute="height" constant="20" id="9yp-0U-5ZU"/>
+                                        <constraint firstAttribute="height" constant="40" id="lT7-lm-SoY"/>
+                                    </constraints>
                                     <fontDescription key="fontDescription" type="system" pointSize="16"/>
                                     <color key="textColor" red="0.66666666666666663" green="0.66666666666666663" blue="0.66666666666666663" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                     <nil key="highlightedColor"/>
+                                    <variation key="default">
+                                        <mask key="constraints">
+                                            <exclude reference="lT7-lm-SoY"/>
+                                        </mask>
+                                    </variation>
                                     <variation key="heightClass=compact">
                                         <fontDescription key="fontDescription" type="system" pointSize="10"/>
+                                    </variation>
+                                    <variation key="heightClass=regular-widthClass=regular">
+                                        <mask key="constraints">
+                                            <exclude reference="9yp-0U-5ZU"/>
+                                            <include reference="lT7-lm-SoY"/>
+                                        </mask>
                                     </variation>
                                 </label>
                                 <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Screenshot April 14, 2016" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="0A6-ua-Qw2">
                                     <rect key="frame" x="26.5" y="427.5" width="242" height="24"/>
+                                    <constraints>
+                                        <constraint firstAttribute="height" constant="24" id="FRz-nn-VRJ"/>
+                                        <constraint firstAttribute="height" constant="48" id="rfr-KK-TqL"/>
+                                    </constraints>
                                     <fontDescription key="fontDescription" type="system" weight="semibold" pointSize="20"/>
                                     <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                     <nil key="highlightedColor"/>
+                                    <variation key="default">
+                                        <mask key="constraints">
+                                            <exclude reference="rfr-KK-TqL"/>
+                                        </mask>
+                                    </variation>
                                     <variation key="heightClass=compact">
                                         <fontDescription key="fontDescription" type="system" weight="semibold" pointSize="10"/>
+                                    </variation>
+                                    <variation key="heightClass=regular-widthClass=regular">
+                                        <mask key="constraints">
+                                            <exclude reference="FRz-nn-VRJ"/>
+                                            <include reference="rfr-KK-TqL"/>
+                                        </mask>
                                     </variation>
                                 </label>
                                 <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="rgL-3O-VOb">

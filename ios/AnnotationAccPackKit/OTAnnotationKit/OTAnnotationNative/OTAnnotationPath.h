@@ -75,6 +75,11 @@
  */
 - (void)drawToPoint:(OTAnnotationPoint *)point;
 
+/**
+ *  Draw a curve line from the last point to the given point.
+ *
+ *  @param point The destination point of the line segment.
+ */
 - (void)drawCurveToPoint:(OTAnnotationPoint *)toPoint;
 
 /**

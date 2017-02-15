@@ -16,7 +16,7 @@
     UIColor *previousStrokeColor;   // this is for memorizing the previous stroke color
 }
 @property (nonatomic) OTAnnotationTextView *currentEditingTextView;
-@property (nonatomic) OTAnnotationPath *currentDrawPath;
+@property (nonatomic) OTAnnotationPath *localDrawPath;
 @property (nonatomic) OTAnnotationDataManager *annotationDataManager;
 @end
 
@@ -38,11 +38,20 @@
     return self;
 }
 
+- (void)setRemoteAnnotatable:(id<OTAnnotatable>)remoteAnnotatable {
+    
+    if ([remoteAnnotatable isKindOfClass:[OTRemoteAnnotationPath class]]) {
+        _remoteAnnotatable = remoteAnnotatable;
+        [self addAnnotatable:remoteAnnotatable];
+        [[AnnLoggingWrapper sharedInstance].logger logEventAction:KLogActionFreeHand variation:KLogVariationSuccess completion:nil];
+    }
+}
+
 - (void)setCurrentAnnotatable:(id<OTAnnotatable>)annotatable {
     
     if ([annotatable isKindOfClass:[OTAnnotationPath class]]) {
         _currentAnnotatable = annotatable;
-        _currentDrawPath = (OTAnnotationPath *)annotatable;
+        _localDrawPath = (OTAnnotationPath *)annotatable;
         [self addAnnotatable:annotatable];
         [[AnnLoggingWrapper sharedInstance].logger logEventAction:KLogActionFreeHand variation:KLogVariationSuccess completion:nil];
     }
@@ -176,7 +185,7 @@
         [self.currentAnnotatable commit];
     }
     _currentAnnotatable = nil;
-    _currentDrawPath = nil;
+    _localDrawPath = nil;
     _currentEditingTextView = nil;
 }
 
@@ -224,10 +233,10 @@
     
     if (_currentEditingTextView) return;
     
-    if (!_currentDrawPath || _currentDrawPath.points.count != 0) {
+    if (!_localDrawPath || _localDrawPath.points.count != 0) {
         
-        if (_currentDrawPath.strokeColor) {
-            self.currentAnnotatable = [[OTAnnotationPath alloc] initWithStrokeColor:_currentDrawPath.strokeColor];
+        if (_localDrawPath.strokeColor) {
+            self.currentAnnotatable = [[OTAnnotationPath alloc] initWithStrokeColor:_localDrawPath.strokeColor];
         }
         else if (previousStrokeColor) {
             self.currentAnnotatable = [[OTAnnotationPath alloc] initWithStrokeColor:previousStrokeColor];
@@ -241,13 +250,13 @@
     
     CGPoint touchPoint = [touch locationInView:touch.view];
     OTAnnotationPoint *annotatinPoint = [OTAnnotationPoint pointWithX:touchPoint.x andY:touchPoint.y];
-    [_currentDrawPath startAtPoint:annotatinPoint];
+    [_localDrawPath startAtPoint:annotatinPoint];
     [[AnnLoggingWrapper sharedInstance].logger logEventAction:KLogActionStartDrawing variation:KLogVariationSuccess completion:nil];
 }
 
 - (void)touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event {
     
-    if (_currentDrawPath) {
+    if (_localDrawPath) {
         UITouch *touch = [touches anyObject];
         
         if (self.annotationViewDelegate) {
@@ -256,14 +265,14 @@
         
         CGPoint touchPoint = [touch locationInView:touch.view];
         OTAnnotationPoint *annotatinPoint = [OTAnnotationPoint pointWithX:touchPoint.x andY:touchPoint.y];
-        [_currentDrawPath drawToPoint:annotatinPoint];
+        [_localDrawPath drawToPoint:annotatinPoint];
         [self setNeedsDisplay];
     }
 }
 
 - (void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event {
     
-    if (_currentDrawPath) {
+    if (_localDrawPath) {
         UITouch *touch = [touches anyObject];
         
         if (self.annotationViewDelegate) {
@@ -272,7 +281,7 @@
         
         CGPoint touchPoint = [touch locationInView:touch.view];
         OTAnnotationPoint *annotatinPoint = [OTAnnotationPoint pointWithX:touchPoint.x andY:touchPoint.y];
-        [_currentDrawPath drawToPoint:annotatinPoint];
+        [_localDrawPath drawToPoint:annotatinPoint];
         [self setNeedsDisplay];
         [self commitCurrentAnnotatable];
         [[AnnLoggingWrapper sharedInstance].logger logEventAction:KLogActionEndDrawing variation:KLogVariationSuccess completion:nil];
