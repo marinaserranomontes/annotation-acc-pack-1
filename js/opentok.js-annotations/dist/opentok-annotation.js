@@ -2160,6 +2160,11 @@
 
   /** End Analytics */
 
+  // Check for DOM element or string.  Return element.
+  var _getElem = function (el) {
+    return typeof el === 'string' ? document.querySelector(el) : el;
+  };
+
   // Trigger event via common layer API
   var _triggerEvent = function (event, data) {
     if (_accPack) {
@@ -2451,11 +2456,11 @@
      * exist, we are watching the canvas belonging to the party viewing the
      * shared screen
      */
-    _elements.resizeSubject = _.property('externalWindow')(options) || window;
-    _elements.externalWindow = _.property('externalWindow')(options) || null;
-    _elements.absoluteParent = _.property('absoluteParent')(options) || null;
-    _elements.imageId = _.property('imageId')(options) || null;
-    _elements.canvasContainer = container;
+    _elements.resizeSubject = _getElem(_.property('externalWindow')(options) || window);
+    _elements.externalWindow = _getElem(_.property('externalWindow')(options) || null);
+    _elements.absoluteParent = _getElem(_.property('absoluteParent')(options) || null);
+    _elements.imageId = _getElem(_.property('imageId')(options) || null);
+    _elements.canvasContainer = _getElem(container);
 
     // The canvas object
     _canvas = new OTSolution.Annotations({
