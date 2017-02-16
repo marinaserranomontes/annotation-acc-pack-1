@@ -2465,7 +2465,7 @@
     // The canvas object
     _canvas = new OTSolution.Annotations({
       feed: pubSub,
-      container: container,
+      container: canvasContainer,
       externalWindow: _elements.externalWindow
     });
 
