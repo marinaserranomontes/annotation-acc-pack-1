@@ -2220,13 +2220,13 @@
   var _resizeCanvas = function () {
     var width;
     var height;
-    var cobrowsing = !!_elements.imageId;
+    var cobrowsing = !!_elements.cobrowsingImage;
     if (cobrowsing) {
       // Cobrowsing images are currently fixed size, so resize isn't needed
       return;
     }
 
-    if (_elements.imageId === null) {
+    if (_elements.cobrowsingImage === null) {
       var el = _elements.absoluteParent || _elements.canvasContainer;
       width = el.clientWidth;
       height = el.clientHeight;
@@ -2394,6 +2394,10 @@
 
   // Determine whether or not the subscriber stream is from a mobile device
   var _requestPlatformData = function (pubSub) {
+    if (!pubSub.stream) {
+      // Are we cobrowsing?
+      return;
+    }
     _session.signal({
       type: 'otAnnotation_requestPlatform',
       to: pubSub.stream.connection,
@@ -2459,7 +2463,7 @@
     _elements.resizeSubject = _getElem(_.property('externalWindow')(options) || window);
     _elements.externalWindow = _getElem(_.property('externalWindow')(options) || null);
     _elements.absoluteParent = _getElem(_.property('absoluteParent')(options) || null);
-    _elements.imageId = _getElem(_.property('imageId')(options) || null);
+    _elements.cobrowsingImage = _getElem(_.property('cobrowsingImage')(options) || null);
     _elements.canvasContainer = _getElem(container);
 
     // The canvas object
