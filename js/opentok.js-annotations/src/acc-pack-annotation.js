@@ -151,7 +151,12 @@
       height = el.clientHeight;
     }
 
-    var videoDimensions = _canvas.videoFeed.stream.videoDimensions;
+    try {
+      var videoDimensions = _canvas.videoFeed.stream.videoDimensions;
+    } catch (e) {
+      console.log('OT Annotation: Annotation video stream no longer exists');
+      return;
+    }
 
     // Override dimensions when subscribing to a mobile screen
     if (_subscribingToMobileScreen) {
