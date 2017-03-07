@@ -2069,7 +2069,7 @@
       try {
         panel.parentNode.removeChild(panel);
       } catch (e) {
-        console.log(e);
+        console.log('Toolbar parent no longer exists');
       }
 
       canvases.forEach(function (annotationView) {
