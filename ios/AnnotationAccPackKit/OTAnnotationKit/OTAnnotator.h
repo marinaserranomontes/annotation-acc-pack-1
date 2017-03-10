@@ -101,6 +101,10 @@ typedef void (^OTAnnotationDataReceivingBlock)(NSArray *data);
  */
 @property (readonly, nonatomic) OTAnnotationScrollView *annotationScrollView;
 
+@property (nonatomic) BOOL stopSendingAnnotation;
+
+@property (nonatomic) BOOL stopReceivingAnnotaiton;
+
 - (void)cleanRemoteCanvas;
 
 #pragma mark - advanced

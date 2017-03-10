@@ -139,6 +139,8 @@ receivedSignalType:(NSString*)type
  fromConnection:(OTConnection*)connection
      withString:(NSString*)string {
     
+    if (self.stopReceivingAnnotaiton) return;
+    
     // TODO for the next person who sees this: a workaround for making the web annotation work
     if ([type isEqualToString:@"otAnnotation_requestPlatform"]) {
         [self.session signalWithType:@"otAnnotation_mobileScreenShare" string:[JSON stringify:@{@"platform":@"ios"}] connection:nil error:nil];
@@ -507,6 +509,8 @@ receivedSignalType:(NSString*)type
             touchBegan:(UITouch *)touch
              withEvent:(UIEvent *)event {
     
+    if (self.stopSendingAnnotation) return;
+    
     signalingPoints = [[NSMutableArray alloc] init];
     
     // update this to ensure color property is not affected by remote annotation data
@@ -523,6 +527,8 @@ receivedSignalType:(NSString*)type
 - (void)annotationView:(OTAnnotationView *)annotationView
             touchMoved:(UITouch *)touch
              withEvent:(UIEvent *)event {
+    
+    if (self.stopSendingAnnotation) return;
     
     if (!signalingPoints) {
         signalingPoints = [[NSMutableArray alloc] init];
@@ -553,6 +559,8 @@ receivedSignalType:(NSString*)type
 - (void)annotationView:(OTAnnotationView *)annotationView
             touchEnded:(UITouch *)touch
              withEvent:(UIEvent *)event {
+    
+    if (self.stopSendingAnnotation) return;
     
     if (signalingPoint) {
         [self signalAnnotatble:annotationView.currentAnnotatable
