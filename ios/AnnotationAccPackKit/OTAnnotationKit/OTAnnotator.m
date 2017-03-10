@@ -157,7 +157,7 @@ receivedSignalType:(NSString*)type
         ![self.session.connection.connectionId isEqualToString:connection.connectionId]) {
         
         // make sure contentSize is up-to-date
-        self.annotationScrollView.scrollView.contentSize = self.annotationScrollView.bounds.size;
+//        self.annotationScrollView.scrollView.contentSize = self.annotationScrollView.bounds.size;
         
         NSArray *jsonArray = [JSON parseJSON:string];
         
