@@ -141,6 +141,11 @@ NSString * const kOTAnnotationToolbarDidAddTextAnnotation = @"kOTAnnotationToolb
     [self.toolbar reloadToolbar];
 }
 
+- (void)setShowDoneButton:(BOOL)showDoneButton {
+    [self done];
+    _showDoneButton = showDoneButton;
+}
+
 - (OTAnnotationColorPickerView *)colorPickerView {
     if (!_colorPickerView) {
         _colorPickerView = [[OTAnnotationColorPickerView alloc] initWithFrame:CGRectMake(self.frame.origin.x, self.frame.origin.y, CGRectGetWidth([UIScreen mainScreen].bounds), HeightOfColorPicker)];
@@ -171,7 +176,7 @@ NSString * const kOTAnnotationToolbarDidAddTextAnnotation = @"kOTAnnotationToolb
 }
 
 - (UIButton *)doneButton {
-    if (!_doneButton) {
+    if (!_doneButton && _showDoneButton) {
         
         _doneButton = [[OTAnnotationToolbarDoneButton alloc] init];
         [_doneButton setImage:[UIImage imageNamed:@"checkmark"
@@ -228,9 +233,13 @@ NSString * const kOTAnnotationToolbarDidAddTextAnnotation = @"kOTAnnotationToolb
 
 - (void)done {
     
+    if (!self.showDoneButton) {
+        return;
+    }
+    
     if (self.toolbarViewDelegate && [self.toolbarViewDelegate respondsToSelector:@selector(annotationToolbarViewAttemptToPressDoneButton:)]) {
-        BOOL done = [self.toolbarViewDelegate annotationToolbarViewAttemptToPressDoneButton:self];
-        if (!done) {
+
+        if (![self.toolbarViewDelegate annotationToolbarViewAttemptToPressDoneButton:self]) {
             return;
         }
     }
@@ -317,7 +326,7 @@ NSString * const kOTAnnotationToolbarDidAddTextAnnotation = @"kOTAnnotationToolb
     else if (sender == self.annotateButton) {
         self.annotationScrollView.annotatable = YES;
         [self dismissColorPickerViewWithAniamtion:YES];
-        if (![self.toolbar containedContentView:self.doneButton]) {
+        if (self.showDoneButton && ![self.toolbar containedContentView:self.doneButton]) {
             if (self.toolbarViewOrientation == OTAnnotationToolbarViewOrientationPortraitlBottom) {
                 [self.toolbar insertContentView:self.doneButton atIndex:0];
             }
@@ -339,7 +348,7 @@ NSString * const kOTAnnotationToolbarDidAddTextAnnotation = @"kOTAnnotationToolb
         self.annotationScrollView.annotatable = YES;
         [self moveSelectionShadowViewTo:nil];
         [self dismissColorPickerViewWithAniamtion:NO];
-        if (![self.toolbar containedContentView:self.doneButton]) {
+        if (self.showDoneButton && ![self.toolbar containedContentView:self.doneButton]) {
             if (self.toolbarViewOrientation == OTAnnotationToolbarViewOrientationPortraitlBottom) {
                 [self.toolbar insertContentView:self.doneButton atIndex:0];
             }
