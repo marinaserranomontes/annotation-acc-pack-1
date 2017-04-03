@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name             = "OTAnnotationKit"
-  s.version          = "2.0.0-beta6"
+  s.version          = "2.0.0-beta7"
   s.summary          = "OpenTok Annotations Accelerator Pack enables users to annotate their screens."
 
   s.description      = "This document describes how to use the OpenTok Annotations Accelerator Pack for iOS. Through the exploration of the OpenTok Annotations Sample App, you will learn best practices for annotating on an iOS mobile device."
@@ -18,19 +18,8 @@ Pod::Spec.new do |s|
   s.resource_bundles = {
     'OTAnnotationKitBundle' => ['ios/AnnotationAccPackKit/OTAnnotationKitBundle/**/*']
   }
-
-  s.public_header_files = 'ios/AnnotationAccPackKit/OTAnnotationKit/OTAnnotationKit.h',
-    'ios/AnnotationAccPackKit/OTAnnotationKit/OTAnnotator.h',
-    'ios/AnnotationAccPackKit/OTAnnotationKit/OTAnnotationNative/OTAnnotatable.h',
-    'ios/AnnotationAccPackKit/OTAnnotationKit/OTAnnotationNative/OTAnnotationDataManager.h',
-    'ios/AnnotationAccPackKit/OTAnnotationKit/OTAnnotationNative/OTAnnotationPath.h',
-    'ios/AnnotationAccPackKit/OTAnnotationKit/OTAnnotationNative/OTAnnotationPoint.h',
-    'ios/AnnotationAccPackKit/OTAnnotationKit/OTAnnotationNative/OTAnnotationTextView.h',
-    'ios/AnnotationAccPackKit/OTAnnotationKit/OTAnnotationNative/OTAnnotationView.h',
-    'ios/AnnotationAccPackKit/OTAnnotationKit/OTAnnotationUI/OTAnnotationScrollView.h',
-    'ios/AnnotationAccPackKit/OTAnnotationKit/OTAnnotationUI/OTFullScreenAnnotationViewController.h',
-    'ios/AnnotationAccPackKit/OTAnnotationKit/OTAnnotationUI/Toolbar/OTAnnotationToolbarView.h'
-
+  
   s.dependency 'LHToolbar', '1.3.0-beta'
   s.dependency 'OTAcceleratorCore'
+  s.deprecated_in_favor_of = 'OTAnnotationAccelerator'
 end
