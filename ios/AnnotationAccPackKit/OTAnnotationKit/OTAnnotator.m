@@ -452,7 +452,7 @@ receivedSignalType:(NSString*)type
     // iPad aspect ratio is 4:3 = 0.75
     
     CGFloat scale = 1.0f;
-    if (thisCanvasWidth < thisCanvasHeight) {
+    if (thisCanvasWidth < thisCanvasHeight || remoteCanvasWidth < remoteCanvasHeight) {
         scale = thisCanvasHeight / remoteCanvasHeight;
     }
     else {
