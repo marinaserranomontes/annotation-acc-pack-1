@@ -75,6 +75,8 @@
  */
 - (void)drawToPoint:(OTAnnotationPoint *)point;
 
+- (void)drawCurveToPoint:(OTAnnotationPoint *)toPoint;
+
 /**
  *  Draw a curve line from the last point to the given point.
  *

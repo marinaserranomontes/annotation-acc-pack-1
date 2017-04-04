@@ -347,7 +347,7 @@
           ctxCopy.translate(width, 0);
           ctxCopy.scale(-1, 1);
         }
-        ctxCopy.drawImage(image, offsetX, offsetY, width, height);
+        ctxCopy.drawImage(image, offsetX, offsetY, width,height);
 
         // We want to make sure we draw the annotations the same way, so we need to flip back
         if (mirrored) {
